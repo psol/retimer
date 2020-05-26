@@ -13,6 +13,8 @@ is shaping time.
 Last but not least, I wanted hands-free control of the retimer. Obstructing the light
 sensor is equivalent to pressing button A (restart).
 
+![retimer alarm goes off](img/retimer_1055.jpg)
+
 ## UX Prototype
 A kitchen timer is not a particulary difficult project. In fact I have had a similar
 workflow for some time: I set my kitchen timer to 5 minutes and when it goes off,

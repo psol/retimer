@@ -87,7 +87,7 @@ def hor_min_sec(seconds):
 def labels(active = [True, True, True]):
   result = displayio.Group(max_size=TIMERS_LEN)
   for i, text in enumerate(('retimer', 'timer 1', 'timer 2')):
-    text_area = label.Label(terminalio.FONT, text=text, color=C_DEFAULT, x=110, y=(i + 1) * 35)
+    text_area = label.Label(terminalio.FONT, text=text, x=110, y=(i + 1) * 35)
     text_area.color = C_DEFAULT if active[i] else C_DISABLED
     result.append(text_area)
   return result
