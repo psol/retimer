@@ -7,7 +7,13 @@ Le document est en deux parties :
 
 - la **partie 1** rassemble ce qui est établi ;
 - la **partie 2** rassemble ce qui reste à définir : le matériel, et les valeurs
-  et comportements à fixer lors des essais de manipulation.
+  et comportements à fixer lors des essais d'utilisation.
+
+Les **essais d'utilisation** se font sur une version préliminaire de la
+minuterie : on développe une première version, on l'utilise quelques jours en
+cuisine, puis on garde ce qui fonctionne et on améliore le reste. Les valeurs
+(CST) et les comportements (OUV) de la partie 2 seront fixés à l'issue de ces
+essais.
 
 ## Identifiants
 
@@ -41,8 +47,8 @@ Règles :
 | ERR | Comportement en cas d'erreur |
 | HP | Hors périmètre |
 | MAT | Matériel à choisir (partie 2) |
-| CST | Constantes à fixer lors des essais (partie 2) |
-| OUV | Comportements encore ouverts (partie 2) |
+| CST | Constantes à fixer lors des essais d'utilisation (partie 2) |
+| OUV | Comportements à valider lors des essais d'utilisation (partie 2) |
 
 ## Contexte
 
@@ -151,8 +157,11 @@ limites :
   une sonnerie, puis l'alerte de fin jusqu'à l'acquittement.
 - **ECH-03.** La fin du décompte est un **événement distinct** : elle déclenche
   sa sonnerie et l'alerte de fin même si une alerte de rappel attend d'être
-  acquittée. Les deux alertes sont alors signalées séparément.
-- **ECH-04.** À l'échéance de la minuterie globale, la minuterie rappel s'arrête.
+  acquittée.
+- **ECH-04.** À l'échéance de la minuterie globale, la minuterie rappel s'arrête
+  et une éventuelle alerte de rappel s'éteint : quand la cuisson est finie, il
+  n'est plus nécessaire de retourner les légumes. Seule l'alerte de fin reste
+  active.
 - **ECH-05.** La minuterie rappel **repart de l'acquittement** : la prochaine
   échéance tombe un intervalle après l'acquittement, pas à une heure fixe depuis
   le démarrage.
@@ -162,7 +171,7 @@ limites :
   de la minuterie globale, il n'y a plus d'échéance de rappel ; la minuterie
   globale sonnera la fin.
 - **ECH-08.** Si les deux échéances coïncident, seule l'échéance de la minuterie
-  globale sonne. Une alerte de rappel déjà active reste signalée.
+  globale sonne.
 
 ## 7. Modification en cours de décompte
 
@@ -194,8 +203,8 @@ Par le bouton d'acquittement :
 
 - **ACQ-04.** L'appareil a **au moins un bouton d'acquittement**. Un appui
   acquitte l'échéance en attente (rappel ou fin) et éteint l'alerte
-  correspondante. Quand l'alerte de rappel et l'alerte de fin sont actives en même
-  temps, un seul appui les acquitte toutes les deux.
+  correspondante. Les deux alertes ne sont jamais actives en même temps
+  (ECH-04).
 - **ACQ-05.** Un appui sans échéance en attente n'a aucun effet.
 
 Par le capteur « mains sales », s'il est présent :
@@ -222,12 +231,12 @@ Par le capteur « mains sales », s'il est présent :
 | ETA-02 | Réglage | Aucun décompte en cours ; l'utilisateur tourne les encodeurs. | Éveillé. |
 | ETA-03 | Démarrage imminent | Délai de démarrage en cours, l'affichage clignote. | Éveillé. |
 | ETA-04 | Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, rafraîchissement de l'affichage, alerte) ; réveillé aussi par une action de l'utilisateur (encodeur, bouton, capteur). |
-| ETA-05 | Terminé | La minuterie globale est arrivée à zéro. L'alerte de fin est active, et l'alerte de rappel aussi si elle n'avait pas été acquittée. | Réveillé selon le besoin des alertes, et par une action de l'utilisateur (encodeur, bouton, capteur). |
+| ETA-05 | Terminé | La minuterie globale est arrivée à zéro. Seule l'alerte de fin est active (ECH-04). | Réveillé selon le besoin des alertes, et par une action de l'utilisateur (encodeur, bouton, capteur). |
 
 - **ETA-06.** L'alerte de rappel n'est pas un état à part : c'est un indicateur
-  qui peut être actif en Décompte comme en Terminé.
-- **ETA-07.** En Terminé, l'affichage indique « 00:00 ». Les alertes sont portées
-  par les indicateurs d'alerte (CMD-07).
+  qui ne peut être actif qu'en Décompte.
+- **ETA-07.** En Terminé, l'affichage indique « 00:00 ». L'alerte de fin est
+  portée par les indicateurs d'alerte (CMD-07).
 - **ETA-08.** En Veille, ce que montre l'affichage dépend de la technologie
   d'écran retenue (voir MAT-12).
 
@@ -244,22 +253,22 @@ Transitions :
 | ETA-16 | Décompte | Acquittement de l'alerte de rappel | Décompte (minuterie rappel relancée, sauf après ACQ-02 ou dans le cas d'ECH-07) |
 | ETA-17 | Décompte | Échéance de la minuterie globale | Terminé (sonnerie, alerte de fin active) |
 | ETA-18 | Décompte | Minuterie globale ramenée à zéro | Veille |
-| ETA-19 | Terminé | Acquittement (un appui éteint toutes les alertes actives) | Veille |
-| ETA-20 | Terminé | Rotation d'un encodeur (acquitte toutes les alertes et commence un nouveau réglage ; a priori, à confirmer : OUV-07) | Réglage |
-| ETA-21 | Terminé | Aucun acquittement pendant le délai d'abandon de l'alerte de fin (CST-10) | Veille (alertes éteintes) |
+| ETA-19 | Terminé | Acquittement de l'alerte de fin | Veille |
+| ETA-20 | Terminé | Rotation d'un encodeur (acquitte l'alerte de fin et commence un nouveau réglage ; a priori, à confirmer : OUV-07) | Réglage |
+| ETA-21 | Terminé | Aucun acquittement pendant le délai d'abandon de l'alerte de fin (CST-10) | Veille (alerte de fin éteinte) |
 
 ## 10. Comportement en cas d'erreur
 
 | Id | Situation | Comportement attendu |
 |---|---|---|
 | ERR-01 | Minuterie globale nulle à la fin du réglage | Le décompte ne démarre pas ; retour en veille après le délai d'inactivité. |
-| ERR-02 | Échéance de rappel jamais acquittée | Pas de nouvelle sonnerie de rappel ; l'alerte de rappel continue, y compris après la fin du décompte, jusqu'à son acquittement. |
-| ERR-03 | Fin du décompte jamais acquittée | L'alerte de fin continue pendant le délai d'abandon (CST-10), puis toutes les alertes s'éteignent et la minuterie passe en Veille, pour préserver les piles. |
+| ERR-02 | Échéance de rappel jamais acquittée | Pas de nouvelle sonnerie de rappel ; l'alerte de rappel continue jusqu'à son acquittement ou jusqu'à la fin du décompte (ECH-04). |
+| ERR-03 | Fin du décompte jamais acquittée | L'alerte de fin continue pendant le délai d'abandon (CST-10), puis l'alerte de fin s'éteint et la minuterie passe en Veille, pour préserver les piles. |
 | ERR-04 | Appui sur le bouton d'acquittement sans échéance en attente | Aucun effet. |
 | ERR-05 | Geste incomplet ou mal reconnu | Aucun acquittement ; le retour visuel disparaît. |
 | ERR-06 | Rotation au-delà des plages | La valeur reste bloquée au minimum ou au maximum. |
 | ERR-07 | Batterie faible | Un indicateur s'affiche ; la minuterie n'interrompt jamais un décompte en cours tant que la batterie le permet (seuil : voir CST-09). |
-| ERR-08 | Coupure d'alimentation pendant un décompte | Le décompte en cours est perdu (reprise au redémarrage : voir OUV-05). |
+| ERR-08 | Coupure d'alimentation pendant un décompte | Aucune information n'est conservée : au retour du courant, la minuterie redémarre comme à l'allumage de l'appareil. |
 
 ## 11. Hors périmètre de cette version
 
@@ -288,7 +297,7 @@ Transitions :
 | MAT-11 | Boîtier | Emplacement dans la cuisine, résistance à la chaleur et aux éclaboussures. |
 | MAT-12 | Affichage en Veille | Dépend de la consommation de l'écran : un écran e-ink peut garder un message « pause » sans consommer ; une autre technologie devra sans doute s'éteindre après un temps sans activité. |
 
-## 13. À fixer lors des essais de manipulation
+## 13. À fixer lors des essais d'utilisation
 
 Valeurs à placer dans les tables de constantes (GEN-06) :
 
@@ -316,7 +325,7 @@ conception sont tranchées et passent en partie 1.
 | OUV-02 | Comment la modification de la minuterie rappel en cours de décompte se répartit-elle entre le temps restant avant la prochaine échéance et l'intervalle des échéances suivantes (MOD-02) ? |
 | OUV-03 | Quel geste retient-on pour le capteur « mains sales », et avec quels seuils de reconnaissance (distance, vitesse, durée) ? |
 | ~~OUV-04~~ | ~~Faut-il limiter la durée de l'alerte de fin non acquittée ?~~ Tranché, voir ERR-03, ETA-21 et CST-10. |
-| OUV-05 | Faut-il reprendre un décompte interrompu par une coupure d'alimentation (ERR-08) ? |
+| ~~OUV-05~~ | ~~Faut-il reprendre un décompte interrompu par une coupure d'alimentation ?~~ Tranché, voir ERR-08. |
 | ~~OUV-06~~ | ~~Que montre l'affichage en Veille et en Terminé ?~~ Tranché, voir ETA-07, ETA-08 et MAT-12. |
 | OUV-07 | En Terminé, tourner un encodeur acquitte-t-il et commence-t-il un nouveau réglage (ETA-20) ? A priori oui. |
 | OUV-08 | Après ACQ-02, peut-on réactiver la minuterie rappel pendant le même décompte (MOD-04) ? A priori oui. |
