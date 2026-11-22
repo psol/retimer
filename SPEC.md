@@ -23,6 +23,9 @@ limites :
 - **Tout se fait sur l'appareil.** Pas d'application, pas de téléphone, pas de
   connexion nécessaire.
 - **Une seule cuisson à la fois.**
+- **Pas de modes.** Chaque commande a une seule fonction, toujours la même. Un
+  bouton rotatif sur lequel on appuie pour changer de fonction est plus
+  compliqué qu'un bouton séparé.
 - **Rappels non intrusifs.** Quand le rappel sonne, on est déjà en train d'agir :
   l'appareil ne doit pas continuer à sonner. Il doit en revanche montrer
   clairement qu'un rappel a été manqué.
@@ -39,12 +42,50 @@ Un programme de cuisson se compose de :
 | Temps total | oui | Durée de la cuisson, au bout de laquelle l'alarme de fin se déclenche. |
 | Intervalle de rappel | non | Période à laquelle un rappel se déclenche pendant la cuisson (retourner les légumes, arroser la viande, rabattre la pâte). Zéro ou absent : aucun rappel. |
 
-Plages et pas de réglage **[à valider]** :
+### Plages et pas de réglage
 
-- temps total : de 1 min à 24 h, par pas de 1 min ;
-- intervalle de rappel : de 0 (désactivé) à 2 h, par pas de 1 min ;
+Plages :
+
+- temps total : de 10 s à 24 h (une cuisson de 45 s au micro-ondes doit être
+  possible) ;
+- intervalle de rappel : de 0 (désactivé) à 2 h ;
 - l'intervalle de rappel ne peut pas être supérieur ou égal au temps total ; s'il
   l'est, aucun rappel n'est programmé.
+
+Pas de réglage progressifs : plus la valeur est grande, plus chaque cran du
+bouton rotatif avance loin. On ne doit pas tourner des centaines de fois pour
+régler 2 h, et la précision à la seconde n'a de sens que pour les cuissons
+courtes. Exemple de paliers, valable pour les deux réglages :
+
+| Valeur actuelle | Pas par cran |
+|---|---|
+| jusqu'à 2 min | 10 s |
+| de 2 à 30 min | 1 min |
+| de 30 min à 2 h | 5 min |
+| au-delà de 2 h | 10 min |
+
+Les seuils et les pas exacts seront fixés par des tests à l'usage.
+
+### Rappels
+
+- Le premier rappel tombe un intervalle après le démarrage de la cuisson.
+- Chaque rappel suivant tombe un intervalle après l'**acquittement** du rappel
+  précédent, et non à une heure fixe depuis le démarrage.
+- Tant qu'un rappel n'est pas acquitté, aucun nouveau rappel n'est programmé :
+  l'indicateur visuel continue de signaler le rappel manqué, sans nouveau son.
+- Les rappels s'arrêtent dès que le temps restant est inférieur à l'intervalle.
+
+### Modification en cours de cuisson
+
+Le programme reste modifiable pendant la cuisson, sans passer par un autre
+écran : en fin de cuisson, on doit souvent allonger ou raccourcir les temps.
+
+- Tourner le bouton « temps total » modifie le **temps restant**, avec les mêmes
+  paliers qu'au réglage. Le ramener à zéro annule la cuisson. **[à valider]**
+- Tourner le bouton « rappel » modifie l'intervalle ; le prochain rappel est
+  recalculé depuis le dernier acquittement (ou le démarrage s'il n'y en a pas eu).
+  Si ce moment est déjà passé, le rappel se déclenche immédiatement. **[à valider]**
+- Ramener l'intervalle à 0 désactive les rappels pour la suite de la cuisson.
 
 ## 4. Entrées
 
@@ -52,10 +93,13 @@ Plages et pas de réglage **[à valider]** :
 |---|---|---|
 | Bouton rotatif « temps total » | Régler le temps total. | Essentiel |
 | Bouton rotatif « rappel » | Régler l'intervalle de rappel. | Essentiel |
-| Appui (bouton poussoir intégré à un rotatif, ou bouton séparé) | Démarrer, acquitter un rappel ou l'alarme de fin, annuler. **[à valider]** | Essentiel |
+| Bouton séparé « OK » | Démarrer la cuisson, acquitter un rappel ou l'alarme de fin. **[à valider : un seul bouton pour ces deux usages]** | Essentiel |
 | Capteur sans contact (geste ou proximité) | Acquitter un rappel les mains sales. Doit fonctionner quelle que soit la lumière ambiante, contrairement au capteur de luminosité du prototype. | Souhaitable |
 | Minuterie matérielle (RTC ou équivalent) | Réveiller le microcontrôleur à la prochaine échéance. | Essentiel |
 | Mesure de la batterie | Détecter une batterie faible. | Essentiel |
+
+Les boutons rotatifs ne servent qu'à régler ; ils ne s'enfoncent pas. La
+disposition physique exacte sera fixée lors de la conception de l'appareil.
 
 Le choix du capteur sans contact dépendra du matériel retenu ; il n'est pas
 bloquant pour une première version.
@@ -65,12 +109,15 @@ bloquant pour une première version.
 | Sortie | Rôle |
 |---|---|
 | Écran | Afficher le temps restant, l'intervalle de rappel et le temps avant le prochain rappel. |
-| Haut-parleur ou buzzer | Émettre un son court et unique à chaque rappel, et l'alarme de fin. |
-| Indicateur visuel de rappel manqué | Signaler un rappel non acquitté, sans son. |
+| Haut-parleur ou buzzer | Émettre un son court et unique à chaque rappel et à la fin de cuisson. |
+| Indicateur visuel | Signaler un rappel ou une fin de cuisson non acquittés, sans son. |
 
-Ordre de préférence pour l'indicateur de rappel manqué, selon le matériel :
+L'alarme de fin suit la même règle non intrusive que les rappels : un son
+unique, puis l'indicateur visuel jusqu'à l'acquittement.
 
-1. une LED qui clignote tant que le rappel n'est pas acquitté ;
+Ordre de préférence pour l'indicateur visuel, selon le matériel :
+
+1. une LED qui clignote tant que l'alerte n'est pas acquittée ;
 2. à défaut, l'écran qui clignote ;
 3. à défaut seulement, le son rejoué à intervalle espacé **[à valider : intervalle]**,
    puisque le son est intrusif.
@@ -83,20 +130,20 @@ Ordre de préférence pour l'indicateur de rappel manqué, selon le matériel :
 | Réglage | L'utilisateur tourne les boutons pour composer le programme. | Microcontrôleur éveillé. |
 | Décompte | La cuisson est en cours. | Microcontrôleur endormi entre deux réveils programmés. |
 | Rappel en attente | Un rappel s'est déclenché et n'a pas été acquitté. Le décompte continue. | Indicateur visuel actif. |
-| Fin | Le temps total est écoulé, l'alarme de fin est active. | Selon l'alarme. |
+| Fin | Le temps total est écoulé. Un son unique a été émis, l'indicateur visuel reste actif. | Indicateur visuel actif. |
 
 Transitions :
 
 | Depuis | Événement | Vers |
 |---|---|---|
 | Veille | Rotation d'un bouton ou appui | Réglage |
-| Réglage | Appui « démarrer » avec un temps total non nul | Décompte |
+| Réglage | Appui sur « OK » avec un temps total non nul | Décompte |
 | Réglage | Aucune action pendant le délai d'inactivité | Veille |
 | Décompte | Échéance d'un rappel | Rappel en attente (son court unique) |
-| Rappel en attente | Acquittement | Décompte |
-| Rappel en attente | Échéance du rappel suivant | Rappel en attente (nouveau son court) |
-| Décompte ou Rappel en attente | Temps total écoulé | Fin |
-| Décompte ou Rappel en attente | Annulation | Réglage |
+| Rappel en attente | Acquittement | Décompte (prochain rappel dans un intervalle) |
+| Décompte ou Rappel en attente | Rotation d'un bouton | Même état, programme modifié |
+| Décompte ou Rappel en attente | Temps total écoulé | Fin (son court unique) |
+| Décompte ou Rappel en attente | Temps restant ramené à zéro | Réglage |
 | Fin | Acquittement | Veille |
 
 Si un rappel tombe au même moment que la fin de cuisson, seule l'alarme de fin
@@ -111,7 +158,8 @@ se déclenche.
 | Fréquence de clignotement de la LED en rappel en attente | flash bref toutes les 2 s | [à valider] |
 | Réveil du microcontrôleur en décompte | à la prochaine échéance (rappel, fin) et au rafraîchissement de l'affichage | [à valider] |
 | Rafraîchissement de l'affichage en décompte | toutes les minutes, puis chaque seconde dans la dernière minute | [à valider] |
-| Calcul des rappels | à intervalle fixe compté depuis le démarrage de la cuisson | [à valider] |
+| Calcul des rappels | un intervalle après le démarrage, puis un intervalle après chaque acquittement | validé |
+| Pas de réglage des boutons rotatifs | progressifs, de 10 s à 10 min par cran selon la valeur | seuils à fixer par des tests |
 
 ## 8. Comportement en cas d'erreur
 
@@ -121,7 +169,8 @@ se déclenche.
 | Intervalle de rappel supérieur ou égal au temps total | Aucun rappel n'est programmé ; l'affichage le signale. |
 | Batterie faible | Un indicateur s'affiche ; une cuisson en cours n'est jamais interrompue par l'appareil tant que la batterie le permet. [à valider : seuil] |
 | Coupure d'alimentation pendant une cuisson | La cuisson en cours est perdue. [à valider : faut-il la reprendre au redémarrage ?] |
-| Rappel jamais acquitté | L'indicateur visuel continue jusqu'à la fin de cuisson. [à valider : limite de durée pour préserver la batterie] |
+| Rappel jamais acquitté | Aucun nouveau rappel n'est programmé ; l'indicateur visuel continue jusqu'à la fin de cuisson. |
+| Fin de cuisson jamais acquittée | L'indicateur visuel continue. [à valider : limite de durée pour préserver la batterie] |
 
 ## 9. Hors périmètre de cette version
 
