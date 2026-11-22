@@ -67,8 +67,9 @@ limites :
 | **Minuterie rappel** | Se déclenche à intervalle régulier pendant le décompte pour signaler qu'il faut agir : retourner les légumes, arroser la viande, rabattre la pâte. Facultative. (Le « retimer » du prototype.) |
 | **Échéance** | Moment où la minuterie globale ou la minuterie rappel arrive à zéro. |
 | **Sonnerie** | Signal sonore émis une seule fois à chaque échéance. |
-| **Alerte** | Signal visuel, non intrusif, qui persiste après la sonnerie tant que l'échéance n'a pas été acquittée. Il permet de voir qu'on a manqué une sonnerie. Il y a deux alertes distinctes : l'**alerte de rappel** et l'**alerte de fin**. |
+| **Alerte** | Signal visuel, non intrusif, qui persiste après la sonnerie tant que l'échéance n'a pas été acquittée. Elle permet de voir qu'on a manqué une sonnerie. Il y a deux alertes distinctes : l'**alerte de rappel** et l'**alerte de fin**. |
 | **Acquitter** | Indiquer à la minuterie qu'on a pris connaissance d'une échéance. L'acquittement éteint l'alerte. |
+| **Minuterie matérielle** | Périphérique du microcontrôleur qui le réveille pendant qu'il est éteint (GEN-05). À ne pas confondre avec la minuterie globale ou la minuterie rappel. |
 
 ---
 
@@ -104,15 +105,15 @@ limites :
 | CMD-02 | Encodeur rotatif « minuterie rappel » | Régler et modifier la minuterie rappel. |
 | CMD-03 | Bouton d'acquittement | Acquitter l'échéance en cours. Obligatoire. |
 | CMD-04 | Capteur « mains sales » | Acquitter sans contact. Souhaitable, selon le matériel (voir ACQ-06 à ACQ-08 et MAT-06). |
-| CMD-05 | Affichage | Montrer le temps restant de la minuterie globale et de la minuterie rappel, et signaler l'imminence du démarrage. Un affichage réduit est permis pour les longs décomptes (voir MAT-04). |
-| CMD-06 | Sonnerie | Plusieurs bips brefs sur 1 à 2 s, et non une tonalité continue. |
-| CMD-07 | Alertes | Signaux visuels persistants jusqu'à l'acquittement ; l'alerte de rappel et l'alerte de fin doivent être distinguables (moyen à définir, voir MAT-05). |
+| CMD-05 | Affichage | Montrer le temps restant de la minuterie globale et de la minuterie rappel, et signaler l'imminence du démarrage. Il porte aussi le retour visuel du capteur « mains sales » (ACQ-07) et l'indicateur de batterie faible (ERR-07). Un affichage réduit est permis pour les longs décomptes (voir MAT-04). |
+| CMD-06 | Émetteur sonore | Émettre la sonnerie : plusieurs bips brefs sur 1 à 2 s, et non une tonalité continue. |
+| CMD-07 | Indicateurs d'alerte | Signaux visuels persistants jusqu'à l'acquittement ; l'alerte de rappel et l'alerte de fin doivent être distinguables (moyen à définir, voir MAT-05). |
 
 ## 3. Plages de réglage
 
 | Id | Minuterie | Minimum | Maximum |
 |---|---|---|---|
-| PLG-01 | Globale | 5 s | 24 h |
+| PLG-01 | Globale | 5 s (la valeur 0 reste atteignable : elle arrête le décompte, voir ACQ-01) | 24 h |
 | PLG-02 | Rappel | 0 (désactivée) | 2 h |
 
 - **PLG-03.** Un décompte court, par exemple 45 s pour le micro-ondes, doit être
@@ -157,9 +158,9 @@ limites :
   le démarrage.
 - **ECH-06.** Tant qu'une échéance de la minuterie rappel n'est pas acquittée, la
   minuterie rappel ne redémarre pas ; aucune nouvelle sonnerie n'est émise.
-- **ECH-07.** Si l'intervalle de la minuterie rappel dépasse le temps restant de
-  la minuterie globale, il n'y a plus d'échéance de rappel ; la minuterie globale
-  sonnera la fin.
+- **ECH-07.** Si la prochaine échéance de la minuterie rappel tombe après celle
+  de la minuterie globale, il n'y a plus d'échéance de rappel ; la minuterie
+  globale sonnera la fin.
 - **ECH-08.** Si les deux échéances coïncident, seule l'échéance de la minuterie
   globale sonne. Une alerte de rappel déjà active reste signalée.
 
@@ -212,10 +213,10 @@ Par le capteur « mains sales », s'il est présent :
 | Id | État | Description | Microcontrôleur |
 |---|---|---|---|
 | ETA-01 | Veille | Aucun décompte en cours, aucune alerte. | Éteint ; réveillé par une rotation d'encodeur. |
-| ETA-02 | Réglage | L'utilisateur tourne les encodeurs. | Éveillé. |
+| ETA-02 | Réglage | Aucun décompte en cours ; l'utilisateur tourne les encodeurs. | Éveillé. |
 | ETA-03 | Démarrage imminent | Délai de démarrage en cours, l'affichage clignote. | Éveillé. |
-| ETA-04 | Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, rafraîchissement de l'affichage, alerte). |
-| ETA-05 | Terminé | La minuterie globale est arrivée à zéro. L'alerte de fin est active, et l'alerte de rappel aussi si elle n'avait pas été acquittée. | Réveillé selon le besoin des alertes. |
+| ETA-04 | Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, rafraîchissement de l'affichage, alerte) ; réveillé aussi par une action de l'utilisateur (encodeur, bouton, capteur). |
+| ETA-05 | Terminé | La minuterie globale est arrivée à zéro. L'alerte de fin est active, et l'alerte de rappel aussi si elle n'avait pas été acquittée. | Réveillé selon le besoin des alertes, et par une action de l'utilisateur (encodeur, bouton, capteur). |
 
 - **ETA-06.** L'alerte de rappel n'est pas un état à part : c'est un indicateur
   qui peut être actif en Décompte comme en Terminé.
@@ -230,7 +231,7 @@ Transitions :
 | ETA-13 | Démarrage imminent | Rotation d'un encodeur | Réglage |
 | ETA-14 | Démarrage imminent | Fin du délai de démarrage | Décompte |
 | ETA-15 | Décompte | Échéance de la minuterie rappel | Décompte (sonnerie, alerte de rappel active) |
-| ETA-16 | Décompte | Acquittement de l'alerte de rappel | Décompte (minuterie rappel relancée) |
+| ETA-16 | Décompte | Acquittement de l'alerte de rappel | Décompte (minuterie rappel relancée, sauf après ACQ-02 ou dans le cas d'ECH-07) |
 | ETA-17 | Décompte | Échéance de la minuterie globale | Terminé (sonnerie, alerte de fin active) |
 | ETA-18 | Décompte | Minuterie globale ramenée à zéro | Veille |
 | ETA-19 | Terminé | Acquittement (un appui éteint toutes les alertes actives) | Veille |
@@ -270,7 +271,7 @@ Transitions :
 | MAT-06 | Capteur « mains sales » | Type à choisir en regardant les capteurs disponibles : un capteur de gestes semble le plus plausible ; l'audio est risqué mais pas exclu ; d'autres idées sont bienvenues. Il doit fonctionner quelle que soit la lumière, contrairement au capteur de luminosité du prototype, et permettre le retour visuel progressif à l'écran (ACQ-07). Souhaitable, non essentiel. |
 | MAT-07 | Bouton d'acquittement | Modèle, emplacement, facilité d'appui avec les mains sales. |
 | MAT-08 | Encodeurs | Modèle, nombre de crans par tour, disposition physique. |
-| MAT-09 | Sonnerie | Haut-parleur ou buzzer, volume. |
+| MAT-09 | Émetteur sonore | Haut-parleur ou buzzer, volume. |
 | MAT-10 | Alimentation | De préférence des piles du commerce plutôt qu'une batterie rechargeable (souhaitable, non obligatoire). Type et nombre de piles, mesure du niveau de charge. |
 | MAT-11 | Boîtier | Emplacement dans la cuisine, résistance à la chaleur et aux éclaboussures. |
 
@@ -299,3 +300,7 @@ Comportements à trancher :
 | OUV-03 | Quel geste retient-on pour le capteur « mains sales », et avec quels seuils de reconnaissance (distance, vitesse, durée) ? |
 | OUV-04 | Faut-il limiter la durée de l'alerte de fin non acquittée pour préserver les piles (ERR-03) ? |
 | OUV-05 | Faut-il reprendre un décompte interrompu par une coupure d'alimentation (ERR-08) ? |
+| OUV-06 | Que montre l'affichage en Veille (ETA-01) et en Terminé (ETA-05) : éteint, « 00:00 », alertes seules ? |
+| OUV-07 | Que fait une rotation d'encodeur en Terminé (ETA-05) : acquittement, nouveau réglage, ou les deux ? Aucune transition n'est définie. |
+| OUV-08 | Après ACQ-02, peut-on réactiver la minuterie rappel en la retournant pendant le même décompte (MOD-02) ? |
+| OUV-09 | Le capteur « mains sales » réagit-il (retour visuel) quand aucune échéance n'est en attente, ou n'est-il actif que pendant une alerte, ce qui économiserait les piles ? |
