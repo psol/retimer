@@ -213,7 +213,7 @@ souvent allonger ou raccourcir les temps.
 | Bouton d'acquittement | Modèle, emplacement, facilité d'appui avec les mains sales. |
 | Encodeurs | Modèle, nombre de crans par tour, disposition physique. |
 | Sonnerie | Haut-parleur ou buzzer, volume. |
-| Alimentation | Batterie, recharge, mesure du niveau de charge. |
+| Alimentation | De préférence des piles du commerce plutôt qu'une batterie rechargeable (souhaitable, non obligatoire). Type et nombre de piles, mesure du niveau de charge. |
 | Boîtier | Emplacement dans la cuisine, résistance à la chaleur et aux éclaboussures. |
 
 ## 13. À fixer lors des essais de manipulation
