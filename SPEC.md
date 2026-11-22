@@ -43,7 +43,7 @@ limites :
 - **Une seule cuisson à la fois.**
 - **Pas de modes.** Chaque commande a une seule fonction, toujours la même. Pas de
   bouton de démarrage : la minuterie démarre d'elle-même quand on cesse de la
-  régler.
+  régler. Un bouton sert uniquement à acquitter.
 - **Non intrusif.** À une échéance, on est déjà en train d'agir : la minuterie ne
   continue pas à sonner. Elle montre en revanche clairement qu'une échéance n'a
   pas été acquittée.
@@ -53,6 +53,10 @@ limites :
 - **Réglages ajustables.** Toutes les valeurs de réglage (délais, pas, seuils,
   motifs de sonnerie et d'alerte) sont regroupées dans des tables de constantes,
   pour pouvoir les faire évoluer rapidement lors des essais.
+- **Développement sur Mac Apple Silicon sans Rosetta.** Toute la chaîne de
+  développement du matériel retenu (compilateur, outil de flashage, débogueur)
+  doit fonctionner nativement sur un Mac à processeur Apple. C'est un critère
+  éliminatoire dans le choix du matériel.
 
 ## 2. Commandes et signaux
 
@@ -60,6 +64,8 @@ limites :
 |---|---|
 | Encodeur rotatif « minuterie globale » | Régler et modifier la minuterie globale. |
 | Encodeur rotatif « minuterie rappel » | Régler et modifier la minuterie rappel. |
+| Bouton d'acquittement | Acquitter l'échéance en cours. Obligatoire. |
+| Capteur « mains sales » | Acquitter sans contact. Souhaitable, selon le matériel (voir « Acquittement » en section 8 et partie 2). |
 | Affichage | Montrer le temps restant de la minuterie globale et de la minuterie rappel, et signaler l'imminence du démarrage. |
 | Sonnerie | Plusieurs bips brefs sur 1 à 2 s, et non une tonalité continue. |
 | Alerte | Signal visuel persistant jusqu'à l'acquittement (moyen à définir, voir partie 2). |
@@ -132,6 +138,22 @@ souvent allonger ou raccourcir les temps.
   vaut probablement acquittement (par exemple, ramener la minuterie rappel de 5 à
   2 min). **[à confirmer lors des essais]**
 
+### Acquittement
+
+- L'appareil a **au moins un bouton d'acquittement**. Un appui acquitte
+  l'échéance en cours (rappel ou fin de cuisson) et éteint l'alerte.
+- Un appui sans échéance en attente n'a aucun effet.
+- Selon le matériel, un **capteur « mains sales »** permet aussi d'acquitter sans
+  contact. Il ne remplace pas le bouton.
+- Le capteur doit **guider l'utilisateur à l'écran**, comme un curseur sur un
+  écran tactile :
+  - dès que le début d'un geste reconnu est détecté, l'écran l'indique ;
+  - le retour visuel progresse avec le geste, jusqu'à l'acquittement.
+  - Exemple, si le geste retenu est un mouvement de la main de haut en bas :
+    quand la main est repérée, l'écran affiche une petite main avec une flèche,
+    et la flèche grandit à mesure que la main avance.
+- Un geste commencé puis abandonné n'acquitte rien ; le retour visuel disparaît.
+
 ## 9. États
 
 | État | Description | Microcontrôleur |
@@ -163,6 +185,8 @@ souvent allonger ou raccourcir les temps.
 | Minuterie globale nulle à la fin du réglage | La cuisson ne démarre pas ; retour en veille après le délai d'inactivité. |
 | Échéance de rappel jamais acquittée | Pas de nouvelle sonnerie ; l'alerte continue jusqu'à la fin de cuisson. |
 | Fin de cuisson jamais acquittée | L'alerte continue. **[limite de durée à définir pour préserver la batterie]** |
+| Appui sur le bouton d'acquittement sans échéance en attente | Aucun effet. |
+| Geste incomplet ou mal reconnu | Aucun acquittement ; le retour visuel disparaît. |
 | Rotation au-delà des plages | La valeur reste bloquée au minimum ou au maximum. |
 | Batterie faible | Un indicateur s'affiche ; la minuterie n'interrompt jamais une cuisson en cours tant que la batterie le permet. **[seuil à définir]** |
 | Coupure d'alimentation pendant une cuisson | La cuisson en cours est perdue. **[à confirmer : faut-il la reprendre au redémarrage ?]** |
@@ -182,9 +206,11 @@ souvent allonger ou raccourcir les temps.
 | Sujet | Options et contraintes |
 |---|---|
 | Microcontrôleur et langage | Doit pouvoir s'éteindre en ne laissant qu'une minuterie matérielle active, qui le réveille. Python n'est pas le meilleur choix pour cela. |
+| Chaîne de développement | Compilateur, outil de flashage et débogueur natifs sur Mac Apple Silicon, sans Rosetta. Certains outils de flashage en avaient encore besoin lors des derniers essais : à vérifier pour chaque option. |
 | Affichage | Type d'écran à choisir ; il doit pouvoir clignoter (démarrage imminent, éventuellement alerte). |
 | Moyen de l'alerte | LED ou écran, selon le matériel retenu. En dernier recours seulement, la sonnerie rejouée à intervalle espacé, puisqu'elle est intrusive. |
-| Acquittement | Moyen d'acquitter à choisir. Les mains sales, un acquittement sans contact serait plus convivial, mais c'est souhaitable et non essentiel. Le capteur retenu doit fonctionner quelle que soit la lumière, contrairement au capteur de luminosité du prototype. |
+| Capteur « mains sales » | Type à choisir en regardant les capteurs disponibles : un capteur de gestes semble le plus plausible ; l'audio est risqué mais pas exclu ; d'autres idées sont bienvenues. Il doit fonctionner quelle que soit la lumière, contrairement au capteur de luminosité du prototype, et permettre le retour visuel progressif à l'écran. Souhaitable, non essentiel. |
+| Bouton d'acquittement | Modèle, emplacement, facilité d'appui avec les mains sales. |
 | Encodeurs | Modèle, nombre de crans par tour, disposition physique. |
 | Sonnerie | Haut-parleur ou buzzer, volume. |
 | Alimentation | Batterie, recharge, mesure du niveau de charge. |
@@ -211,5 +237,5 @@ Comportements à trancher :
 2. Comment la modification de la minuterie rappel en cours de cuisson se
    répartit-elle entre le temps restant avant la prochaine échéance et
    l'intervalle des échéances suivantes ?
-3. Comment acquitter une échéance sans toucher aux réglages, une fois le moyen
-   d'acquittement choisi ?
+3. Quel geste retient-on pour le capteur « mains sales », et avec quels seuils
+   de reconnaissance (distance, vitesse, durée) ?
