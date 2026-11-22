@@ -150,7 +150,8 @@ doit souvent allonger ou raccourcir les temps.
 
 - L'appareil a **au moins un bouton d'acquittement**. Un appui acquitte
   l'échéance en attente (rappel ou fin) et éteint l'alerte correspondante.
-  Quand les deux alertes sont actives, voir partie 2.
+  Quand l'alerte de rappel et l'alerte de fin sont actives en même temps, un
+  seul appui les acquitte toutes les deux.
 - Un appui sans échéance en attente n'a aucun effet.
 - Selon le matériel, un **capteur « mains sales »** permet aussi d'acquitter sans
   contact. Il ne remplace pas le bouton.
@@ -187,7 +188,7 @@ actif en Décompte comme en Terminé.
 | Décompte | Acquittement de l'alerte de rappel | Décompte (minuterie rappel relancée) |
 | Décompte | Échéance de la minuterie globale | Terminé (sonnerie, alerte de fin active) |
 | Décompte | Minuterie globale ramenée à zéro | Veille |
-| Terminé | Acquittement de toutes les alertes actives | Veille |
+| Terminé | Acquittement (un appui éteint toutes les alertes actives) | Veille |
 
 ## 10. Comportement en cas d'erreur
 
@@ -252,6 +253,3 @@ Comportements à trancher :
    l'intervalle des échéances suivantes ?
 3. Quel geste retient-on pour le capteur « mains sales », et avec quels seuils
    de reconnaissance (distance, vitesse, durée) ?
-4. Quand l'alerte de rappel et l'alerte de fin sont actives en même temps, un
-   appui acquitte-t-il les deux, ou d'abord l'alerte de fin puis l'alerte de
-   rappel ?
