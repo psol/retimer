@@ -1,7 +1,9 @@
 # Retimer : spécification des besoins
 
 Version de travail du 22 novembre 2026. Ce document décrit le comportement
-attendu de la nouvelle minuterie. Il est en deux parties :
+attendu de la nouvelle minuterie. La minuterie décompte le temps ; elle n'est pas
+responsable de la cuisson. La cuisson n'apparaît ici que comme cas d'usage.
+Le document est en deux parties :
 
 - la **partie 1** rassemble ce qui est établi ;
 - la **partie 2** rassemble ce qui reste à définir : le matériel, et les valeurs
@@ -14,7 +16,7 @@ minuterie qui rappelle régulièrement de vérifier la cuisson. Il a aussi montr
 limites :
 
 - pas de mise en veille, donc une autonomie faible ;
-- trois compteurs fixes au lieu d'un programme de cuisson simple ;
+- trois compteurs fixes au lieu d'une minuterie globale et d'une minuterie rappel ;
 - commande sans les mains par le capteur de luminosité de la carte, peu fiable
   quand la lumière est faible ;
 - aucune électronique sur mesure, et un code qui ne tourne plus sur les versions
@@ -25,11 +27,12 @@ limites :
 | Terme | Définition |
 |---|---|
 | **Minuterie** | L'ensemble formé par la minuterie globale et la minuterie rappel. C'est aussi le nom de l'appareil. |
-| **Minuterie globale** | Compte le temps total de la cuisson. |
-| **Minuterie rappel** | Se déclenche à intervalle régulier pendant la cuisson pour signaler qu'il faut agir : retourner les légumes, arroser la viande, rabattre la pâte. Facultative. (Le « retimer » du prototype.) |
+| **Minuterie globale** | Décompte le temps total. |
+| **Décompte** | Période pendant laquelle la minuterie globale, et éventuellement la minuterie rappel, comptent le temps. |
+| **Minuterie rappel** | Se déclenche à intervalle régulier pendant le décompte pour signaler qu'il faut agir : retourner les légumes, arroser la viande, rabattre la pâte. Facultative. (Le « retimer » du prototype.) |
 | **Échéance** | Moment où la minuterie globale ou la minuterie rappel arrive à zéro. |
 | **Sonnerie** | Signal sonore émis une seule fois à chaque échéance. |
-| **Alerte** | Signal visuel, non intrusif, qui persiste après la sonnerie tant que l'échéance n'a pas été acquittée. Il permet de voir qu'on a manqué une sonnerie. |
+| **Alerte** | Signal visuel, non intrusif, qui persiste après la sonnerie tant que l'échéance n'a pas été acquittée. Il permet de voir qu'on a manqué une sonnerie. Il y a deux alertes distinctes : l'**alerte de rappel** et l'**alerte de fin**. |
 | **Acquitter** | Indiquer à la minuterie qu'on a pris connaissance d'une échéance. L'acquittement éteint l'alerte. |
 
 ---
@@ -40,7 +43,7 @@ limites :
 
 - **Tout se fait sur l'appareil.** Pas d'application, pas de téléphone, pas de
   connexion nécessaire.
-- **Une seule cuisson à la fois.**
+- **Un seul décompte à la fois.**
 - **Pas de modes.** Chaque commande a une seule fonction, toujours la même. Pas de
   bouton de démarrage : la minuterie démarre d'elle-même quand on cesse de la
   régler. Un bouton sert uniquement à acquitter.
@@ -66,9 +69,9 @@ limites :
 | Encodeur rotatif « minuterie rappel » | Régler et modifier la minuterie rappel. |
 | Bouton d'acquittement | Acquitter l'échéance en cours. Obligatoire. |
 | Capteur « mains sales » | Acquitter sans contact. Souhaitable, selon le matériel (voir « Acquittement » en section 8 et partie 2). |
-| Affichage | Montrer le temps restant de la minuterie globale et de la minuterie rappel, et signaler l'imminence du démarrage. |
+| Affichage | Montrer le temps restant de la minuterie globale et de la minuterie rappel, et signaler l'imminence du démarrage. Un affichage réduit est permis pour les longs décomptes (voir partie 2). |
 | Sonnerie | Plusieurs bips brefs sur 1 à 2 s, et non une tonalité continue. |
-| Alerte | Signal visuel persistant jusqu'à l'acquittement (moyen à définir, voir partie 2). |
+| Alertes | Signaux visuels persistants jusqu'à l'acquittement ; l'alerte de rappel et l'alerte de fin doivent être distinguables (moyen à définir, voir partie 2). |
 
 ## 3. Plages de réglage
 
@@ -77,13 +80,13 @@ limites :
 | Globale | 5 s | 24 h |
 | Rappel | 0 (désactivée) | 2 h |
 
-Une cuisson courte, par exemple 45 s au micro-ondes, doit être possible, sans
+Un décompte court, par exemple 45 s pour le micro-ondes, doit être possible, sans
 minuterie rappel.
 
 ## 4. Réglage par les encodeurs
 
 - On tourne toujours **à partir de la valeur affichée**, c'est-à-dire du temps
-  restant. Exemple : pour une cuisson de 30 min dont 10 min sont passées,
+  restant. Exemple : pour un décompte de 30 min dont 10 min sont passées,
   l'affichage indique 20 min, et tourner l'encodeur part de 20 min, pas de 30.
   Même principe pour la minuterie rappel.
 - Le **pas** d'un cran dépend de deux paramètres :
@@ -98,17 +101,21 @@ minuterie rappel.
 
 - Quand l'utilisateur cesse de tourner les encodeurs et que la minuterie globale
   n'est pas nulle, la minuterie attend un **délai de démarrage** (3 s, à valider).
-- Pendant ce délai, l'affichage clignote pour indiquer que la cuisson va
+- Pendant ce délai, l'affichage clignote pour indiquer que le décompte va
   démarrer.
 - Toute rotation pendant ce délai le recommence.
-- À la fin du délai, la cuisson démarre : les deux minuteries décomptent.
+- À la fin du délai, le décompte démarre.
 
 ## 6. Échéances, sonnerie et alerte
 
 - **Échéance de la minuterie rappel :** une sonnerie est émise une fois, puis
-  l'alerte reste active jusqu'à l'acquittement.
+  l'alerte de rappel reste active jusqu'à l'acquittement.
 - **Échéance de la minuterie globale :** même règle non intrusive, une sonnerie
-  puis l'alerte jusqu'à l'acquittement.
+  puis l'alerte de fin jusqu'à l'acquittement.
+- La fin du décompte est un **événement distinct** : elle déclenche sa sonnerie
+  et l'alerte de fin même si une alerte de rappel attend d'être acquittée. Les
+  deux alertes sont alors signalées séparément.
+- À l'échéance de la minuterie globale, la minuterie rappel s'arrête.
 - La minuterie rappel **repart de l'acquittement** : la prochaine échéance tombe
   un intervalle après l'acquittement, pas à une heure fixe depuis le démarrage.
 - Tant qu'une échéance de la minuterie rappel n'est pas acquittée, la minuterie
@@ -116,14 +123,15 @@ minuterie rappel.
 - Si l'intervalle de la minuterie rappel dépasse le temps restant de la minuterie
   globale, il n'y a plus d'échéance de rappel ; la minuterie globale sonnera la
   fin.
-- Si les deux échéances coïncident, seule celle de la minuterie globale compte.
+- Si les deux échéances coïncident, seule l'échéance de la minuterie globale
+  sonne. Une alerte de rappel déjà active reste signalée.
 
-## 7. Modification en cours de cuisson
+## 7. Modification en cours de décompte
 
-Le programme reste modifiable pendant la cuisson : en fin de cuisson, on doit
-souvent allonger ou raccourcir les temps.
+Les minuteries restent modifiables pendant le décompte : en fin de cuisson, on
+doit souvent allonger ou raccourcir les temps.
 
-- L'encodeur « minuterie globale » modifie le temps restant de la cuisson.
+- L'encodeur « minuterie globale » modifie le temps restant.
 - L'encodeur « minuterie rappel » modifie le temps restant avant la prochaine
   échéance de rappel, et l'intervalle utilisé ensuite. **[comportement exact à
   fixer lors des essais, voir partie 2]**
@@ -131,9 +139,9 @@ souvent allonger ou raccourcir les temps.
 
 ## 8. Arrêt et acquittement par les encodeurs
 
-- **Ramener la minuterie globale à zéro** arrête la cuisson et acquitte tout.
+- **Ramener la minuterie globale à zéro** arrête le décompte et acquitte tout.
 - **Ramener la minuterie rappel à zéro** acquitte l'échéance de rappel en cours et
-  désactive la minuterie rappel pour la suite de la cuisson.
+  désactive la minuterie rappel pour la suite du décompte.
 - Toute autre modification d'une minuterie dont l'échéance n'est pas acquittée
   vaut probablement acquittement (par exemple, ramener la minuterie rappel de 5 à
   2 min). **[à confirmer lors des essais]**
@@ -141,7 +149,8 @@ souvent allonger ou raccourcir les temps.
 ### Acquittement
 
 - L'appareil a **au moins un bouton d'acquittement**. Un appui acquitte
-  l'échéance en cours (rappel ou fin de cuisson) et éteint l'alerte.
+  l'échéance en attente (rappel ou fin) et éteint l'alerte correspondante.
+  Quand les deux alertes sont actives, voir partie 2.
 - Un appui sans échéance en attente n'a aucun effet.
 - Selon le matériel, un **capteur « mains sales »** permet aussi d'acquitter sans
   contact. Il ne remplace pas le bouton.
@@ -158,12 +167,14 @@ souvent allonger ou raccourcir les temps.
 
 | État | Description | Microcontrôleur |
 |---|---|---|
-| Veille | Aucune cuisson en cours. | Éteint ; réveillé par une rotation d'encodeur. |
+| Veille | Aucun décompte en cours, aucune alerte. | Éteint ; réveillé par une rotation d'encodeur. |
 | Réglage | L'utilisateur tourne les encodeurs. | Éveillé. |
 | Démarrage imminent | Délai de démarrage en cours, l'affichage clignote. | Éveillé. |
-| Cuisson | Les minuteries décomptent. | Éteint entre deux réveils programmés (échéance ou rafraîchissement de l'affichage). |
-| Cuisson avec alerte | Une échéance de rappel n'a pas été acquittée. La minuterie globale continue. | Réveillé selon le besoin de l'alerte. |
-| Fin | La minuterie globale est arrivée à zéro, l'alerte est active. | Réveillé selon le besoin de l'alerte. |
+| Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, rafraîchissement de l'affichage, alerte). |
+| Terminé | La minuterie globale est arrivée à zéro. L'alerte de fin est active, et l'alerte de rappel aussi si elle n'avait pas été acquittée. | Réveillé selon le besoin des alertes. |
+
+L'alerte de rappel n'est pas un état à part : c'est un indicateur qui peut être
+actif en Décompte comme en Terminé.
 
 | Depuis | Événement | Vers |
 |---|---|---|
@@ -171,30 +182,30 @@ souvent allonger ou raccourcir les temps.
 | Réglage | Aucune rotation, minuterie globale non nulle | Démarrage imminent |
 | Réglage | Aucune rotation pendant le délai d'inactivité, minuterie globale nulle | Veille |
 | Démarrage imminent | Rotation d'un encodeur | Réglage |
-| Démarrage imminent | Fin du délai de démarrage | Cuisson |
-| Cuisson | Échéance de la minuterie rappel | Cuisson avec alerte (sonnerie) |
-| Cuisson avec alerte | Acquittement | Cuisson (minuterie rappel relancée) |
-| Cuisson ou Cuisson avec alerte | Échéance de la minuterie globale | Fin (sonnerie) |
-| Cuisson ou Cuisson avec alerte | Minuterie globale ramenée à zéro | Veille |
-| Fin | Acquittement | Veille |
+| Démarrage imminent | Fin du délai de démarrage | Décompte |
+| Décompte | Échéance de la minuterie rappel | Décompte (sonnerie, alerte de rappel active) |
+| Décompte | Acquittement de l'alerte de rappel | Décompte (minuterie rappel relancée) |
+| Décompte | Échéance de la minuterie globale | Terminé (sonnerie, alerte de fin active) |
+| Décompte | Minuterie globale ramenée à zéro | Veille |
+| Terminé | Acquittement de toutes les alertes actives | Veille |
 
 ## 10. Comportement en cas d'erreur
 
 | Situation | Comportement attendu |
 |---|---|
-| Minuterie globale nulle à la fin du réglage | La cuisson ne démarre pas ; retour en veille après le délai d'inactivité. |
-| Échéance de rappel jamais acquittée | Pas de nouvelle sonnerie ; l'alerte continue jusqu'à la fin de cuisson. |
-| Fin de cuisson jamais acquittée | L'alerte continue. **[limite de durée à définir pour préserver la batterie]** |
+| Minuterie globale nulle à la fin du réglage | Le décompte ne démarre pas ; retour en veille après le délai d'inactivité. |
+| Échéance de rappel jamais acquittée | Pas de nouvelle sonnerie de rappel ; l'alerte de rappel continue, y compris après la fin du décompte, jusqu'à son acquittement. |
+| Fin du décompte jamais acquittée | L'alerte de fin continue. **[limite de durée à définir pour préserver la batterie]** |
 | Appui sur le bouton d'acquittement sans échéance en attente | Aucun effet. |
 | Geste incomplet ou mal reconnu | Aucun acquittement ; le retour visuel disparaît. |
 | Rotation au-delà des plages | La valeur reste bloquée au minimum ou au maximum. |
-| Batterie faible | Un indicateur s'affiche ; la minuterie n'interrompt jamais une cuisson en cours tant que la batterie le permet. **[seuil à définir]** |
-| Coupure d'alimentation pendant une cuisson | La cuisson en cours est perdue. **[à confirmer : faut-il la reprendre au redémarrage ?]** |
+| Batterie faible | Un indicateur s'affiche ; la minuterie n'interrompt jamais un décompte en cours tant que la batterie le permet. **[seuil à définir]** |
+| Coupure d'alimentation pendant un décompte | Le décompte en cours est perdu. **[à confirmer : faut-il la reprendre au redémarrage ?]** |
 
 ## 11. Hors périmètre de cette version
 
 - application mobile ou connexion à un téléphone ;
-- plusieurs cuissons en parallèle ;
+- plusieurs décomptes en parallèle ;
 - thermomètre ou autre capteur de cuisson connecté.
 
 ---
@@ -207,8 +218,9 @@ souvent allonger ou raccourcir les temps.
 |---|---|
 | Microcontrôleur et langage | Doit pouvoir s'éteindre en ne laissant qu'une minuterie matérielle active, qui le réveille. Python n'est pas le meilleur choix pour cela. |
 | Chaîne de développement | Compilateur, outil de flashage et débogueur natifs sur Mac Apple Silicon, sans Rosetta. Certains outils de flashage en avaient encore besoin lors des derniers essais : à vérifier pour chaque option. |
-| Affichage | Type d'écran à choisir ; il doit pouvoir clignoter (démarrage imminent, éventuellement alerte). |
-| Moyen de l'alerte | LED ou écran, selon le matériel retenu. En dernier recours seulement, la sonnerie rejouée à intervalle espacé, puisqu'elle est intrusive. |
+| Affichage | Type d'écran à choisir ; il doit pouvoir clignoter (démarrage imminent, éventuellement alertes). |
+| Affichage réduit | Flexibilité ouverte, pas un besoin : si l'analyse montre que cela économise l'énergie sur le matériel retenu, un long décompte peut s'afficher sans les secondes (par exemple « 12:-- ») pour éviter de rafraîchir l'écran chaque seconde. L'affichage complet (« 00:45 ») ne revient que sur les derniers instants. Les deux minuteries étant affichées ensemble, la plus proche de son échéance peut imposer le rythme de rafraîchissement. |
+| Moyen des alertes | LED ou écran, selon le matériel retenu, avec un signal distinct pour l'alerte de rappel et l'alerte de fin. En dernier recours seulement, la sonnerie rejouée à intervalle espacé, puisqu'elle est intrusive. |
 | Capteur « mains sales » | Type à choisir en regardant les capteurs disponibles : un capteur de gestes semble le plus plausible ; l'audio est risqué mais pas exclu ; d'autres idées sont bienvenues. Il doit fonctionner quelle que soit la lumière, contrairement au capteur de luminosité du prototype, et permettre le retour visuel progressif à l'écran. Souhaitable, non essentiel. |
 | Bouton d'acquittement | Modèle, emplacement, facilité d'appui avec les mains sales. |
 | Encodeurs | Modèle, nombre de crans par tour, disposition physique. |
@@ -227,15 +239,19 @@ Valeurs à placer dans les tables de constantes :
 | Pas initial selon la valeur de départ | 5 s à partir de 0 ; 5 min à partir de 2 h ; paliers intermédiaires à définir |
 | Accélération selon la rotation continue | par exemple 5 s, 10 s, 30 s ; 5 min, 10 min |
 | Motif de la sonnerie | plusieurs bips brefs sur 1 à 2 s |
-| Motif de l'alerte | clignotement bref, période à définir |
-| Rafraîchissement de l'affichage en cuisson | à définir selon l'écran et la consommation |
+| Motifs des alertes | un motif pour le rappel, un autre pour la fin ; période à définir |
+| Rafraîchissement de l'affichage en décompte | à définir selon l'écran et la consommation |
+| Seuil de passage à l'affichage complet (si affichage réduit) | par exemple la dernière minute |
 
 Comportements à trancher :
 
 1. Modifier une minuterie dont l'échéance n'est pas acquittée vaut-il
    acquittement ? A priori oui.
-2. Comment la modification de la minuterie rappel en cours de cuisson se
+2. Comment la modification de la minuterie rappel en cours de décompte se
    répartit-elle entre le temps restant avant la prochaine échéance et
    l'intervalle des échéances suivantes ?
 3. Quel geste retient-on pour le capteur « mains sales », et avec quels seuils
    de reconnaissance (distance, vitesse, durée) ?
+4. Quand l'alerte de rappel et l'alerte de fin sont actives en même temps, un
+   appui acquitte-t-il les deux, ou d'abord l'alerte de fin puis l'alerte de
+   rappel ?
