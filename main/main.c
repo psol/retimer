@@ -102,7 +102,8 @@ static uint32_t apply(const input_event_t *ev, int64_t now)
     }
     case EV_NEXT_REMINDER: {
         int64_t start_value = view.state == STATE_FINISHED ? 0 : m->interval_ms;
-        int64_t new_interval = adjust_next_reminder(start_value);
+        int64_t total = view.state == STATE_FINISHED ? 0 : view.total_ms;
+        int64_t new_interval = adjust_next_reminder(start_value, total);
         ESP_LOGI(TAG, "rappel %lld -> %lld ms", (long long)start_value,
                  (long long)new_interval);
         return ktimer_set_reminder(m, now, new_interval);

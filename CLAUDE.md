@@ -99,7 +99,13 @@ dessous. Chaque commande se trouve ainsi à côté de la valeur qu'elle règle.
 | Bouton sous la molette, maintenu 3 s | Extinction de l'appareil ; le même bouton l'allume (circuit d'alimentation). L'appui d'allumage ne compte pas comme un réglage du rappel. | — |
 
 La liste des intervalles de rappel est une table de constantes (GEN-06), par
-exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min.
+exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min. La liste
+s'arrête aux intervalles inférieurs à la minuterie globale affichée : avec
+2:00, seul 1 min est proposé (soirée 2).
+
+Affichage réduit (MAT-04) : « 12:-- » montre les minutes de l'affichage
+complet (12:59 donne « 12:-- »). Il redevient complet sous 2 min (CST-08) et
+pendant 5 s après chaque réglage, pour voir la valeur qu'on règle.
 
 Ce qui reste conforme à SPEC.md :
 

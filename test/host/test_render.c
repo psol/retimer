@@ -95,7 +95,9 @@ static void test_CMD_05_duration_format(void)
 static void test_MAT_04_reduced_format(void)
 {
     check_format(M(12), true, "12:--");
-    check_format(M(11) + 1, true, "12:--");
+    check_format(M(12) + S(59), true, "12:--");
+    check_format(M(11) + S(59) + 1, true, "12:--");
+    check_format(M(11) + S(59), true, "11:--");
     check_format(H(2) + M(30), true, "2:30:--");
 }
 

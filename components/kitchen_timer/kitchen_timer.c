@@ -70,6 +70,7 @@ void ktimer_init(ktimer_t *m)
     m->alert_start_ms = 0;
     m->limit_ms = KTIMER_NEVER;
     m->last_action_ms = 0;
+    m->full_until_ms = 0;
 }
 
 uint32_t ktimer_advance(ktimer_t *m, int64_t now)
@@ -166,6 +167,7 @@ uint32_t ktimer_set_total(ktimer_t *m, int64_t now,
         }
         /* MOD-01, MOD-03 : le décompte continue depuis la nouvelle valeur. */
         m->end_ms = now + new_total_ms;
+        m->full_until_ms = now + CST_FULL_DISPLAY_AFTER_ADJUST_MS;
         return signals;
     }
     return signals;
@@ -199,6 +201,7 @@ uint32_t ktimer_set_reminder(ktimer_t *m, int64_t now,
 
     case STATE_RUNNING:
         m->interval_ms = new_interval_ms;
+        m->full_until_ms = now + CST_FULL_DISPLAY_AFTER_ADJUST_MS;
         if (new_interval_ms == 0) {
             /* ACQ-02 : acquitte et désactive pour la suite du décompte. */
             m->reminder_alert = false;
@@ -340,7 +343,8 @@ void ktimer_view(const ktimer_t *m, int64_t now,
             view->reminder_ms = reminder_remaining;
             reminder_active = true;
         }
-        view->reduced = reduced_display(view->total_ms, reminder_active,
+        view->reduced = now >= m->full_until_ms &&
+                        reduced_display(view->total_ms, reminder_active,
                                         reminder_remaining);
         break;
     }
@@ -356,19 +360,22 @@ void ktimer_view(const ktimer_t *m, int64_t now,
 }
 
 /*
- * Prochain changement d'un affichage arrondi au pas supérieur : la valeur
- * affichée est ceil(restant / pas) ; elle change quand restant atteint le
- * multiple du pas immédiatement inférieur.
+ * Prochain changement de l'affichage. Complet : la valeur affichée est
+ * s = ceil(restant / 1 s) ; elle change quand restant atteint (s - 1) s.
+ * Réduit : les minutes de l'affichage complet, s / 60 ; elles changent quand
+ * s passe à 60 × (s / 60) - 1 (render_format_duration).
  */
-static int64_t next_change(int64_t deadline, int64_t now,
-                           int64_t step_size)
+static int64_t next_change(int64_t deadline, int64_t now, bool reduced)
 {
     int64_t remaining = deadline - now;
     if (remaining <= 0) {
         return KTIMER_NEVER;
     }
-    int64_t shown = (remaining + step_size - 1) / step_size;
-    return deadline - (shown - 1) * step_size;
+    int64_t seconds = (remaining + SECOND_MS - 1) / SECOND_MS;
+    if (reduced) {
+        return deadline - ((seconds / 60) * 60 - 1) * SECOND_MS;
+    }
+    return deadline - (seconds - 1) * SECOND_MS;
 }
 
 /* Prochain changement de phase d'un motif de période donnée. */
@@ -407,8 +414,7 @@ static int64_t next_multiple(int64_t start, int64_t period,
 static int64_t display_wakeup(int64_t deadline, int64_t now,
                               bool reduced)
 {
-    int64_t t = next_change(deadline, now,
-                            reduced ? MINUTE_MS : SECOND_MS);
+    int64_t t = next_change(deadline, now, reduced);
     if (reduced) {
         /* Passage à l'affichage complet (CST-08). */
         int64_t toggle = deadline - CST_FULL_DISPLAY_THRESHOLD_MS;
@@ -446,6 +452,9 @@ int64_t ktimer_next_wakeup(const ktimer_t *m, int64_t now)
     case STATE_RUNNING:
         t = m->end_ms;
         t = min64(t, display_wakeup(m->end_ms, now, view.reduced));
+        if (m->full_until_ms > now) {
+            t = min64(t, m->full_until_ms); /* retour à l'affichage réduit */
+        }
         if (view.reminder == REMINDER_RUNNING) {
             t = min64(t, m->reminder_ms);
             t = min64(t, display_wakeup(m->reminder_ms, now,

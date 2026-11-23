@@ -55,6 +55,11 @@ typedef struct {
     int64_t limit_ms;
     /* Démarrage : instant de la dernière action (phase du clignotement). */
     int64_t last_action_ms;
+    /*
+     * Décompte : affichage complet jusqu'à cet instant après un réglage
+     * (CST_FULL_DISPLAY_AFTER_ADJUST_MS), pour voir la valeur réglée.
+     */
+    int64_t full_until_ms;
 } ktimer_t;
 
 /* Ce que la minuterie rappel montre à l'écran. */

@@ -108,8 +108,17 @@ extern const size_t CST_REMINDER_INTERVAL_COUNT;
 /* MAT-04 : affichage réduit (« 12:-- ») pour les longs décomptes. */
 #define CST_REDUCED_DISPLAY true
 
-/* CST-08 : en dessous de ce temps restant, l'affichage redevient complet. */
-#define CST_FULL_DISPLAY_THRESHOLD_MS (1 * MINUTE_MS)
+/*
+ * CST-08 : à ce temps restant et en dessous, l'affichage redevient complet.
+ * Soirée 2 : sous 2 min, on a besoin des secondes.
+ */
+#define CST_FULL_DISPLAY_THRESHOLD_MS (2 * MINUTE_MS)
+
+/*
+ * MAT-04 : après un réglage pendant le décompte, l'affichage reste complet
+ * ce temps-là, pour voir la valeur qu'on règle (soirée 2).
+ */
+#define CST_FULL_DISPLAY_AFTER_ADJUST_MS (5 * SECOND_MS)
 
 /* DEM-02 : période du clignotement de démarrage imminent (allumé + éteint). */
 #define CST_BLINK_PERIOD_MS (1 * SECOND_MS)

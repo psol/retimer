@@ -289,8 +289,12 @@ void render_format_duration(int64_t duration_ms, bool reduced, char *out)
         duration_ms = CST_TOTAL_MAX_MS;
     }
     if (reduced) {
-        /* MAT-04 : minutes arrondies au-dessus, sans les secondes. */
-        int minutes = (int)((duration_ms + MINUTE_MS - 1) / MINUTE_MS);
+        /*
+         * MAT-04 : les minutes de l'affichage complet, sans les secondes.
+         * 2:59 s'affiche « 02:-- », comme « 02:59 » (soirée 2).
+         */
+        int64_t seconds = (duration_ms + SECOND_MS - 1) / SECOND_MS;
+        int minutes = (int)(seconds / 60);
         int h = (minutes / 60) % 100;
         int m = minutes % 60;
         if (h > 0) {
