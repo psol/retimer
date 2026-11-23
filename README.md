@@ -14,7 +14,7 @@ to set my kitchen timer to 5 minutes and restart it every time it went off.
 Except I often forgot to restart it. The first Retimer was a quick prototype to
 test a better workflow: a timer that re-triggers by itself.
 
-![The 2020 prototype, alarm going off](img/retimer_1055.jpg)
+![The 2020 prototype, alarm going off](docs/img/retimer_1055.jpg)
 
 It ran on an off-the-shelf [Adafruit PyBadge](https://www.adafruit.com/product/4200)
 in CircuitPython 5.3, with:

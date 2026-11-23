@@ -8,8 +8,9 @@ Guide de travail pour le dépôt Retimer. À lire avant toute intervention, avec
 Retimer est une minuterie de cuisine physique : une minuterie globale décompte le
 temps total, une minuterie rappel facultative sonne à intervalle régulier pendant
 le décompte (retourner les légumes, arroser la viande). Le prototype de 2020
-(`code.py`, CircuitPython sur Adafruit PyBadge) reste dans le dépôt comme
-référence historique ; il n'est plus maintenu.
+(CircuitPython sur Adafruit PyBadge) est archivé sous le tag `v1.1`
+(`git checkout v1.1`) ; il n'est plus maintenu. Le plan de réalisation est
+dans [docs/PLAN.md](docs/PLAN.md).
 
 On écrit en français : documentation, messages de commit, commentaires.
 
