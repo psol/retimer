@@ -16,15 +16,17 @@
 #include "eink_display.h"
 #include "esp_attr.h"
 #include "esp_log.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "kitchen_timer.h"
 #include "adjust.h"
-#include "render.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
 #include "input.h"
 #include "input_hw.h"
-#include "signals.h"
+#include "kitchen_timer.h"
 #include "power.h"
+#include "render.h"
+#include "signals.h"
 
 static const char *TAG = "retimer";
 
@@ -48,7 +50,17 @@ typedef struct {
 
 static RTC_DATA_ATTR rtc_memory_t rtc;
 
+/*
+ * Saisie : une tâche lit les boutons toutes les INPUT_PERIOD_MS, y compris
+ * pendant les mises à jour de l'écran (environ 330 ms, bloquantes), et met
+ * les événements en file. Sans elle, un cran de molette donné pendant une
+ * mise à jour était perdu : en Démarrage imminent, l'écran clignote et le
+ * délai n'était pas relancé (DEM-03, essai du 23 novembre 2026).
+ */
+#define INPUT_PERIOD_MS 5
 static input_t input;
+static SemaphoreHandle_t input_lock;
+static QueueHandle_t input_queue;
 static render_image_t image;
 static bool low_battery = false;
 static int64_t last_battery_measure = INT64_MIN / 2;
@@ -154,6 +166,31 @@ static void show_screen(int64_t now)
     }
 }
 
+static void input_task(void *arg)
+{
+    (void)arg;
+    for (;;) {
+        input_event_t evs[8];
+        xSemaphoreTake(input_lock, portMAX_DELAY);
+        size_t n = input_process(&input, power_now_ms(), input_hw_read(),
+                                 evs, 8);
+        xSemaphoreGive(input_lock);
+        for (size_t i = 0; i < n; i++) {
+            xQueueSend(input_queue, &evs[i], 0);
+        }
+        vTaskDelay(pdMS_TO_TICKS(INPUT_PERIOD_MS));
+    }
+}
+
+/* Un bouton tenu, ou des événements pas encore traités. */
+static bool input_pending(void)
+{
+    xSemaphoreTake(input_lock, portMAX_DELAY);
+    bool busy = input_busy(&input);
+    xSemaphoreGive(input_lock);
+    return busy || uxQueueMessagesWaiting(input_queue) > 0;
+}
+
 void app_main(void)
 {
     power_init(); /* maintenir l'alimentation avant tout */
@@ -189,12 +226,18 @@ void app_main(void)
         }
     }
 
+    input_lock = xSemaphoreCreateMutex();
+    input_queue = xQueueCreate(16, sizeof(input_event_t));
+    /* Priorité au-dessus de la boucle principale, qui attend l'écran. */
+    xTaskCreate(input_task, "saisie", 3072, NULL, 5, NULL);
+
     for (;;) {
         int64_t now = power_now_ms();
         uint32_t signals = SIGNAL_NONE;
 
-        n += input_process(&input, now, input_hw_read(),
-                           events + n, 8 - n);
+        while (n < 8 && xQueueReceive(input_queue, &events[n], 0)) {
+            n++;
+        }
         for (size_t i = 0; i < n; i++) {
             signals |= apply(&events[i], now);
         }
@@ -206,14 +249,16 @@ void app_main(void)
         ring(signals);
 
         /* Tant qu'un bouton est tenu, on reste éveillé et on scrute. */
-        if (input_busy(&input)) {
+        if (input_pending()) {
             vTaskDelay(pdMS_TO_TICKS(POLL_PERIOD_MS));
             continue;
         }
 
         now = power_now_ms();
         int64_t wakeup = ktimer_next_wakeup(&rtc.timer, now);
+        xSemaphoreTake(input_lock, portMAX_DELAY);
         int64_t r = input_next_wakeup(&input);
+        xSemaphoreGive(input_lock);
         if (r < wakeup) {
             wakeup = r;
         }

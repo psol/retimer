@@ -98,6 +98,8 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E5 | Firmware, en Veille : appui court sur le bouton sous la molette. | Réveil, réglage avec « RAPPEL 01:00 » (ETA-10). | |
 | E6 | Firmware : maintenir le bouton sous la molette 3 s. | Écran « RETIMER ÉTEINT », puis extinction sur batterie (sur USB : retour en Veille). | |
 | E7 | Firmware : laisser venir une alerte de rappel, puis l'acquitter ; puis l'alerte de fin. | Un rafraîchissement complet (clignotement) à l'entrée et à la sortie de chaque alerte ; plus de rémanence en blanc sur noir. | |
+| E9 | Firmware : régler une valeur, puis pendant le clignotement donner des crans rapides de molette, en haut puis en bas. | Chaque cran est pris en compte et relance le délai de 3 s : le décompte ne part qu'après 3 s sans action (DEM-03). | |
+| E10 | Firmware : total 2 min, rappel 1 min ; acquitter le rappel à 1 min. | Le rappel affiche « ARRÊT » (plus d'échéance avant la fin, ECH-07), plus « APRÈS LA FIN ». | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent

@@ -8,3 +8,5 @@ CONFIG_PM_ENABLE=n
 CONFIG_COMPILER_WARN_WRITE_STRINGS=y
 # Journaux sur la console série (idf.py monitor).
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
+# 1 ms : lecture des boutons toutes les 5 ms (main.c).
+CONFIG_FREERTOS_HZ=1000

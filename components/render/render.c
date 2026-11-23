@@ -376,11 +376,13 @@ static void reminder_zone(render_image_t *im, const ktimer_view_t *view,
     int available_width = RENDER_WIDTH - MARGIN - value_left;
     switch (view->reminder) {
     case REMINDER_OFF:
+    case REMINDER_SPENT:
+        /*
+         * ECH-07 : plus d'échéance de rappel avant la fin. Même affichage
+         * que le rappel à l'arrêt : « APRÈS LA FIN » déroutait (essai du
+         * 23 novembre 2026).
+         */
         text_right(im, RENDER_WIDTH - MARGIN, middle - 10, "ARRÊT", 3);
-        return;
-    case REMINDER_SPENT: /* ECH-07 */
-        text_right(im, RENDER_WIDTH - MARGIN, middle - 17, "APRÈS", 2);
-        text_right(im, RENDER_WIDTH - MARGIN, middle + 3, "LA FIN", 2);
         return;
     case REMINDER_SET:
     case REMINDER_RUNNING:

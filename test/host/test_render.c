@@ -164,13 +164,13 @@ static void test_ECH_01_reminder_alert_inverted_zone(void)
 }
 
 /* ECH-07 : plus de rappel avant la fin. */
-static void test_ECH_07_reminder_after_end(void)
+static void test_ECH_07_spent_reminder_shows_off(void)
 {
     int64_t start_value = start_countdown(M(10), M(4));
     ktimer_advance(&m, start_value + M(4));
     ktimer_acknowledge(&m, start_value + M(7));
     draw(start_value + M(7) + S(30));
-    snapshot("08_reminder_after_end");
+    snapshot("08_reminder_spent");
 }
 
 /* ETA-07, ECH-02 : alerte de fin, tout l'écran inversé, « 00:00 ». */
@@ -244,7 +244,7 @@ int main(void)
     RUN_TEST(test_CMD_05_full_countdown);
     RUN_TEST(test_CMD_05_countdown_over_one_hour);
     RUN_TEST(test_ECH_01_reminder_alert_inverted_zone);
-    RUN_TEST(test_ECH_07_reminder_after_end);
+    RUN_TEST(test_ECH_07_spent_reminder_shows_off);
     RUN_TEST(test_ETA_07_end_alert_inverted_screen);
     RUN_TEST(test_PLG_03_short_countdown_without_reminder);
     RUN_TEST(test_ERR_07_low_battery);
