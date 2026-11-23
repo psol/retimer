@@ -122,6 +122,31 @@ La logique métier (étape 2) est la plus grosse partie et ne demande pas la
 carte : on peut avancer dessus pendant que la chaîne de flashage se met en
 place.
 
+### Travail sans le Mac ni le CoreInk
+
+Benoît n'a accès au Mac et au CoreInk que le soir. Le travail est donc réparti
+en deux files : la journée, Claude avance dans le cloud sur ce qui ne demande
+ni la carte ni le Mac, et Benoît relit les pull requests depuis son téléphone ;
+le soir, on fait sur le Mac seulement ce qui en a vraiment besoin.
+
+| Sans le Mac (journée, dans le cloud) | Avec le Mac et le CoreInk (soir) |
+|---|---|
+| **Recherche documentaire** sur le CoreInk : brochage de la molette, du bouton, du buzzer et de la LED, contrôleur de l'écran et ses modes de mise à jour partielle, broches capables de réveiller l'ESP32 depuis la veille profonde, mesure de la tension de la batterie. Résultat : une fiche `docs/coreink.md` avec ses sources, qui sert d'entrée aux pilotes. | Installer ESP-IDF et esptool, vérifier qu'ils sont natifs (`file`). |
+| **Étape 1, partie hôte** : squelette du dépôt, projet de tests `test/host/`, intégration continue GitHub Actions (tests sur un runner macOS arm64, compilation du firmware dans l'image Docker d'ESP-IDF). | Flasher le « bonjour » et lire la console : fin de l'étape 1. |
+| **Étape 2 en entier** : `constantes`, `reglage`, `minuterie`, `rendu`, avec leurs tests. Les images du rendu sont jointes aux pull requests, pour relire les écrans sans carte. | — |
+| **Étape 3, premier jet** : pilotes écrits d'après la fiche `docs/coreink.md` et compilés par la CI, mais pas encore vérifiés. | Applications de test des pilotes sur la carte, mesures de consommation, corrections. |
+| **Étape 4** : assemblage dans `main`, compilé par la CI. | Recette technique (section 4.4), tag `v2.0`. |
+| Modèles de journal et de rapport d'essai (`docs/essais/`). | — |
+
+Limites :
+
+- un pilote écrit sans la carte n'est qu'une hypothèse : il n'est réputé
+  fonctionner qu'après sa vérification sur la carte, et il faut s'attendre à
+  des corrections le soir ;
+- la CI vérifie que le firmware compile, pas qu'il tourne ;
+- le temps du soir passe surtout à flasher et observer : il vaut mieux
+  préparer une liste précise de vérifications pour chaque soirée.
+
 ## 4. Tests techniques
 
 Les tests techniques vérifient que le logiciel **fait ce que dit SPEC.md**. Ils
