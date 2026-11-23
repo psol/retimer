@@ -29,7 +29,8 @@ kitchen. What it also showed:
 - no sleep mode, so the battery drains quickly;
 - three fixed timers are less natural than one total timer plus one reminder;
 - the light sensor is unreliable in a dim kitchen;
-- the code no longer runs on current CircuitPython releases.
+- the code is tied to CircuitPython 5.3: it still runs on the original board,
+  but a new board with a current CircuitPython would need a port.
 
 The prototype is archived under the [`v1.1` tag](https://github.com/psol/retimer/tree/v1.1)
 (`git checkout v1.1`). It is no longer maintained.

@@ -29,8 +29,9 @@ Sommaire :
 
 **Ce qui se fait le plus : l'option A.** Un dossier d'archive se rencontre surtout
 dans les projets sans gestion de version, ou quand l'ancien code doit continuer à
-être compilé à côté du nouveau, ce qui n'est pas le cas ici : le code de 2020 ne
-tourne plus sur les versions actuelles de CircuitPython.
+être compilé à côté du nouveau, ce qui n'est pas le cas ici : le code de 2020
+fonctionne sur la carte de l'époque, flashée avec CircuitPython 5.3, mais la
+nouvelle version ne le réutilise pas.
 
 ### Solution retenue : option A
 
@@ -85,7 +86,9 @@ Contenu (le brouillon est sur la branche) :
    « retimer » qui se relance et deux minuteries simples, commande sans les mains
    par le capteur de luminosité. Ce qu'il a validé (l'utilité du rappel
    régulier) et ses limites (autonomie, capteur peu fiable en faible lumière,
-   code qui ne tourne plus). Photo et lien vers le tag `v1.1`.
+   code lié à CircuitPython 5.3 : il fonctionne toujours sur la carte de
+   l'époque, mais une carte neuve avec un CircuitPython récent demanderait un
+   portage). Photo et lien vers le tag `v1.1`.
 3. **Version 2 (en cours)** : objectifs : une minuterie globale et une minuterie
    rappel, pas de modes ni de bouton de démarrage, alertes non intrusives,
    autonomie maximale (microcontrôleur en veille), tout sur l'appareil. Matériel
@@ -110,9 +113,9 @@ couvertes sont citées dans les commits et les tests.
 | **1. Chaîne et squelette** | Installer ESP-IDF et esptool natifs arm64 sur le Mac, vérifier avec `file`. Projet ESP-IDF vide avec les composants de CLAUDE.md (en-têtes seulement). Projet de tests sur l'hôte (section 4). Intégration continue GitHub Actions. Un « bonjour » flashé sur le CoreInk et lu dans `idf.py monitor`. | Dépôt qui compile, CI au vert, procédure d'installation dans le README. | Le CoreInk affiche un texte flashé depuis le Mac, sans Rosetta. |
 | **2. Logique métier, sur l'hôte** | `constantes`, `reglage`, `minuterie`, `rendu`, écrits avec leurs tests, sans carte. Ordre : constantes → reglage (REG, PLG) → minuterie (ETA, DEM, ECH, ACQ, MOD, ERR) → rendu (CMD-05, alertes inversées, clignotement, affichage réduit). | Composants testés ; images de référence du rendu. | Toutes les exigences de la partie 1 applicables au CoreInk ont au moins un test. |
 | **3. Pilotes CoreInk** | `ecran_eink`, `saisie`, `signaux`, `veille`. Chacun avec une petite application de test sur la carte. | Pilotes et applications de test. | Chaque pilote passe sa vérification sur la carte (section 4.3). Consommation en veille mesurée. |
-| **4. Intégration** | `main` : réveil, événements, logique, rendu, prochain réveil, mise en veille. Tests de bout en bout sur la carte. | Version préliminaire `v2.0.0-essai.1`. | Recette technique passée (section 4.4). |
+| **4. Intégration** | `main` : réveil, événements, logique, rendu, prochain réveil, mise en veille. Tests de bout en bout sur la carte. | Version préliminaire `v2.0`. | Recette technique passée (section 4.4). |
 | **5. Essais d'utilisation, tour 1** | Quelques jours en cuisine (section 5). | Rapport d'essai. | Rapport rédigé. |
-| **6. Correctifs** | Tri du rapport, corrections, ajustement des constantes, évolutions de SPEC.md avec l'accord de Benoît (section 6). | `v2.0.0-essai.2`, puis nouveau tour d'essai si nécessaire. | Critères de sortie de la section 6. |
+| **6. Correctifs** | Tri du rapport, corrections, ajustement des constantes, évolutions de SPEC.md avec l'accord de Benoît (section 6). | `v2.1`, puis nouveau tour d'essai si nécessaire. | Critères de sortie de la section 6. |
 | **7. Bilan matériel** | Décision e-ink ou Sharp Memory LCD, à partir des points d'observation de CLAUDE.md. | Note de décision. | Choix du matériel suivant, ou CoreInk confirmé. |
 
 La logique métier (étape 2) est la plus grosse partie et ne demande pas la
@@ -214,7 +217,7 @@ Les deux sortes de tests sont séparées :
 
 Déroulement d'un tour d'essai :
 
-1. une version d'essai taguée (`v2.0.0-essai.N`), avec ses constantes ;
+1. une version taguée (`v2.0`, `v2.1`…), avec ses constantes ;
 2. quelques jours d'utilisation normale, sans forcer les situations ;
 3. un journal court rempli après chaque utilisation (5 minutes) ;
 4. le rapport d'essai rédigé à la fin du tour, à partir du journal.
@@ -263,8 +266,8 @@ Le rapport est trié en lots, chaque lot dans sa propre pull request :
 Ordre : les défauts bloquants, puis les évolutions de SPEC.md (elles changent ce
 qu'on teste), puis le reste.
 
-Après les correctifs, recette technique (section 4.4), nouvelle version
-`v2.0.0-essai.N+1`, et nouveau tour d'essai si des questions restent ouvertes.
+Après les correctifs, recette technique (section 4.4), version suivante
+(`v2.1`, `v2.2`…), et nouveau tour d'essai si des questions restent ouvertes.
 
 **Critères de sortie** des essais : aucun défaut bloquant ou gênant ouvert, les
 OUV et CST concernés tranchés, les points d'observation du CoreInk renseignés.
@@ -274,8 +277,15 @@ On passe alors au bilan matériel (étape 7).
 
 - `master` : la version stable. On y arrive par pull request, après relecture.
 - Branches de travail : une par étape ou par lot de correctifs.
-- Tags : `v1.0` et `v1.1` pour le prototype ; `v2.0.0-essai.N` pour les versions
-  remises en essai ; `v2.0.0` quand les critères de sortie sont atteints.
+- Tags, dans la continuité de `v1.0` et `v1.1` (le prototype) :
+  - `v2.0` : la première version préliminaire, remise en essai ;
+  - `v2.1`, `v2.2`… : une version par tour de correctifs, chacune remise en
+    essai ;
+  - `v2.0.1`, `v2.1.1`… : une correction urgente pendant un tour d'essai (un
+    défaut bloquant), sans attendre la fin du tour.
+- Le rapport d'essai cite la version essayée. La fin des essais n'a pas de
+  numéro à part : c'est la dernière version `v2.x` qui remplit les critères de
+  sortie, notée comme telle dans sa release.
 - Les tags sont annotés et ne sont jamais déplacés une fois poussés.
 
 ## Points à valider par Benoît
