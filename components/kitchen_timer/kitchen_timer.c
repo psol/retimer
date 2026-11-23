@@ -33,6 +33,7 @@ static void start_countdown(ktimer_t *m, int64_t start_value)
     m->end_ms = start_value + m->total_ms;
     m->reminder_ms = (m->interval_ms > 0) ? start_value + m->interval_ms
                                           : KTIMER_NEVER;
+    m->full_until_ms = start_value + CST_FULL_DISPLAY_AT_START_MS;
     m->reminder_alert = false;
     m->end_alert = false;
     m->limit_ms = KTIMER_NEVER;

@@ -120,6 +120,12 @@ extern const size_t CST_REMINDER_INTERVAL_COUNT;
  */
 #define CST_FULL_DISPLAY_AFTER_ADJUST_MS (5 * SECOND_MS)
 
+/*
+ * MAT-04 : au départ du décompte, l'affichage reste complet ce temps-là
+ * (5:00, 4:59, 4:58…), puis passe en réduit (soirée 2, demande de Benoît).
+ */
+#define CST_FULL_DISPLAY_AT_START_MS (15 * SECOND_MS)
+
 /* DEM-02 : période du clignotement de démarrage imminent (allumé + éteint). */
 #define CST_BLINK_PERIOD_MS (1 * SECOND_MS)
 
