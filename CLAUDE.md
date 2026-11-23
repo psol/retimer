@@ -113,22 +113,24 @@ Ce qui reste conforme à SPEC.md :
   REG-03 pour le rappel) ; pour diminuer, il faut faire le tour de la liste ;
 - l'accélération du réglage dépend de la durée du maintien de la molette, pas
   d'une rotation continue ;
-- pas de LED d'alerte (voir « Alertes à l'écran » ci-dessous) ;
+- les alertes ne reposent pas sur la seule LED (voir « Alertes à l'écran » ci-dessous) ;
 - pas de capteur « mains sales » dans cette étape (CMD-04 est souhaitable) ; un
   capteur pourra être branché plus tard sur le port Grove.
 
 ### Alertes à l'écran
 
-La fiche technique du CoreInk mentionne une LED, mais elle n'est pas visible
-sur le boîtier : on ne compte pas dessus pour les alertes (CMD-07, MAT-05).
-Les alertes passent par l'écran, en inversant le noir et le blanc, par exemple :
+La fiche technique du CoreInk mentionne une LED, mais son emplacement sur le
+boîtier n'est pas évident : on peut l'utiliser en complément, mais on ne compte
+pas que sur elle pour les alertes (CMD-07, MAT-05). Le signal principal passe
+par l'écran, en inversant le noir et le blanc, par exemple :
 
 - **alerte de rappel** : seule la zone du rappel (en bas) est inversée ;
 - **alerte de fin** : tout l'écran est inversé.
 
 Avantage de l'e-ink : l'image inversée reste affichée sans consommer, ce qui
 convient à une alerte persistante et non intrusive (GEN-04). Le motif exact
-(fixe ou clignotant lent) est à régler en essai (CST-06). À vérifier en essai :
+(fixe ou clignotant lent) et l'usage de la LED en complément sont à régler en
+essai (CST-06). À vérifier en essai :
 que l'inversion reste visible de loin et ne laisse pas de traces.
 
 Cette interface permet de commencer les essais d'utilisation tout de suite, en
