@@ -294,6 +294,28 @@ qu'on teste), puis le reste.
 Après les correctifs, recette technique (section 4.4), version suivante
 (`v2.1`, `v2.2`…), et nouveau tour d'essai si des questions restent ouvertes.
 
+### 6.3 Évolutions et ajustements déjà notés
+
+Notés pendant les vérifications sur la carte (soirée 1, 23 novembre 2026), à
+traiter dans une étape suivante, après les essais :
+
+- **Relancer le dernier programme** (évolution, proposée par Benoît) : un
+  bouton relance toute la minuterie avec la globale et le rappel réglés la
+  dernière fois, pour refaire la recette précédente sans tout régler de
+  nouveau. Sur le CoreInk, le bouton au-dessus de l'écran (GPIO 5) est libre.
+  Il ne réveille pas de la veille profonde : en Veille, il faudrait d'abord
+  réveiller la carte, ou choisir un autre geste (appui long sur la molette,
+  par exemple). À rédiger dans SPEC.md avec `/spec` : quel programme est
+  gardé, s'il survit à l'extinction (ERR-08 dit aujourd'hui que rien n'est
+  conservé après une coupure), et le retour à l'écran.
+- **Accélération de la molette** (ajustement, CST-04) : elle accélère trop vite
+  sur les petites valeurs. Pistes : faire dépendre l'accélération de la valeur
+  (petits pas sous 1 à 2 min), ou allonger les paliers de maintien.
+- **Délai de démarrage** (ajustement, CST) : 3 s, jugé court pour régler
+  plusieurs minutes.
+- **Premier appui perdu au réveil** (défaut) : depuis la Veille, il faut
+  appuyer, attendre, puis appuyer de nouveau.
+
 **Critères de sortie** des essais : aucun défaut bloquant ou gênant ouvert, les
 OUV et CST concernés tranchés, les points d'observation du CoreInk renseignés.
 On passe alors au bilan matériel (étape 7).
