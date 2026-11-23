@@ -1,0 +1,290 @@
+# Retimer : plan de réalisation
+
+Version de travail du 23 novembre 2026. Ce plan décrit comment passer du
+prototype de 2020 à une version préliminaire de la nouvelle minuterie, l'essayer
+en cuisine, puis la corriger. Il s'appuie sur [SPEC.md](../SPEC.md) (les besoins)
+et [CLAUDE.md](../CLAUDE.md) (matériel provisoire M5Stack CoreInk, interface
+réduite, chaîne ESP-IDF, architecture modulaire). Il ne modifie pas SPEC.md.
+
+Sommaire :
+
+1. Archivage du prototype de 2020
+2. README
+3. Étapes de développement
+4. Tests techniques
+5. Tests d'usage (essais d'utilisation)
+6. Rapport d'essai et phase de correctifs
+7. Versions et branches
+
+---
+
+## 1. Archivage du prototype de 2020
+
+### Les deux options
+
+| Option | Principe | Avantages | Inconvénients |
+|---|---|---|---|
+| **A. Tag puis suppression** | On pose un tag sur le dernier état du prototype, puis on supprime ses fichiers de la branche de développement. | Pratique la plus courante. L'arborescence de la nouvelle version reste propre. Le prototype reste consultable, téléchargeable et restaurable en une commande (`git checkout v1.1`). Rien n'est perdu : tout l'historique reste dans Git. | Le prototype n'est plus visible en parcourant les fichiers : il faut passer par le tag (lien dans le README). |
+| B. Dossier `archive/` | On déplace les fichiers dans un dossier. | Visible tout de suite. | Du code mort dans l'arborescence, qui encombre les recherches, les outils (CI, analyse) et les sessions d'IA, qui le lisent comme s'il était actuel. L'historique Git le conserve déjà : c'est un doublon. |
+
+**Ce qui se fait le plus : l'option A.** Un dossier d'archive se rencontre surtout
+dans les projets sans gestion de version, ou quand l'ancien code doit continuer à
+être compilé à côté du nouveau, ce qui n'est pas le cas ici : le code de 2020 ne
+tourne plus sur les versions actuelles de CircuitPython.
+
+### Solution retenue : option A
+
+Constat sur le dépôt :
+
+- un tag `v1.0` existe déjà, sur le commit `1b45b58` (« Minimal set of
+  features », 23 mai 2020) ;
+- `master` a un commit de plus, `de68c8c` (« Photo added », 26 mai 2020) : la
+  photo, son lien dans le README, et une petite correction de `code.py`
+  (couleur des libellés).
+
+On **ne déplace pas** `v1.0` : modifier un tag déjà publié est une mauvaise
+pratique (les copies existantes gardent l'ancien). On ajoute un tag pour le
+dernier état :
+
+1. **Tag annoté `v1.1`** sur `de68c8c` (le `master` actuel), avec le message
+   « Prototype CircuitPython sur Adafruit PyBadge (2020), dernier état avant la
+   nouvelle version ». Tag poussé sur GitHub.
+2. **Release GitHub** sur ce tag (facultatif, recommandé) : une page visible
+   avec une archive zip et un résumé du prototype.
+3. **Suppression sur la branche de développement**, en un commit dédié :
+   - `code.py` et `fonts/Noto-18.bdf` (code et police du prototype) ;
+   - les entrées propres à CircuitPython dans `.gitignore` (`boot_out.txt`,
+     `lib`, `.fseventsd`, `.metadata_never_index`, `.Trashes`), remplacées par
+     celles d'ESP-IDF (`build/`, `sdkconfig.old`, `managed_components/`…).
+4. **On garde** : `LICENSE`, `.gitattributes`, et la photo
+   `img/retimer_1055.jpg`, déplacée dans `docs/img/` : elle illustre la première
+   version dans le nouveau README.
+5. **CLAUDE.md** : la phrase « le prototype reste dans le dépôt comme référence
+   historique » devient « le prototype est archivé sous le tag `v1.1` ».
+6. Le README renvoie au tag : `https://github.com/psol/retimer/tree/v1.1`.
+
+Pour retrouver le prototype : `git checkout v1.1`, ou le lien du tag sur GitHub.
+
+`master` ne change qu'à la fusion de la pull request de la branche de
+développement (section 7).
+
+**À valider par Benoît avant exécution** : la poussée du tag et la suppression
+des fichiers.
+
+## 2. README
+
+Le README reste en anglais. Un projet sur GitHub est lu par des visiteurs de
+passage : il présente le projet, il ne remplace ni SPEC.md ni CLAUDE.md.
+
+Contenu (le brouillon est sur la branche) :
+
+1. **Retimer** en une phrase : une minuterie de cuisine qui décompte le temps
+   total et rappelle régulièrement d'agir (retourner les légumes, arroser la
+   viande).
+2. **Version 1 (2020)** : prototype CircuitPython sur Adafruit PyBadge, un
+   « retimer » qui se relance et deux minuteries simples, commande sans les mains
+   par le capteur de luminosité. Ce qu'il a validé (l'utilité du rappel
+   régulier) et ses limites (autonomie, capteur peu fiable en faible lumière,
+   code qui ne tourne plus). Photo et lien vers le tag `v1.1`.
+3. **Version 2 (en cours)** : objectifs : une minuterie globale et une minuterie
+   rappel, pas de modes ni de bouton de démarrage, alertes non intrusives,
+   autonomie maximale (microcontrôleur en veille), tout sur l'appareil. Matériel
+   provisoire M5Stack CoreInk pour essayer l'e-ink en cuisine. Liens vers
+   SPEC.md et CLAUDE.md (en français, signalé).
+4. **Built with AI** : le choix de développer avec Claude Code et la méthode :
+   spécification d'abord, identifiants d'exigences cités jusque dans les tests,
+   règles de travail dans CLAUDE.md, décisions et relectures humaines, essais
+   en cuisine par une personne.
+5. **Project layout**, **Building** (ESP-IDF, Mac Apple Silicon natif) et
+   **Running the tests** : ajoutés quand le code existera (étapes 1 et 2).
+6. **License** : inchangée.
+
+## 3. Étapes de développement
+
+Chaque étape se termine par une pull request relue par Benoît. Les exigences
+couvertes sont citées dans les commits et les tests.
+
+| Étape | Contenu | Livrable | Fin d'étape |
+|---|---|---|---|
+| **0. Préparation** | Archivage (section 1), README (section 2), ce plan. Pas de code applicatif. | PR de documentation. | PR fusionnée dans `master`. |
+| **1. Chaîne et squelette** | Installer ESP-IDF et esptool natifs arm64 sur le Mac, vérifier avec `file`. Projet ESP-IDF vide avec les composants de CLAUDE.md (en-têtes seulement). Projet de tests sur l'hôte (section 4). Intégration continue GitHub Actions. Un « bonjour » flashé sur le CoreInk et lu dans `idf.py monitor`. | Dépôt qui compile, CI au vert, procédure d'installation dans le README. | Le CoreInk affiche un texte flashé depuis le Mac, sans Rosetta. |
+| **2. Logique métier, sur l'hôte** | `constantes`, `reglage`, `minuterie`, `rendu`, écrits avec leurs tests, sans carte. Ordre : constantes → reglage (REG, PLG) → minuterie (ETA, DEM, ECH, ACQ, MOD, ERR) → rendu (CMD-05, alertes inversées, clignotement, affichage réduit). | Composants testés ; images de référence du rendu. | Toutes les exigences de la partie 1 applicables au CoreInk ont au moins un test. |
+| **3. Pilotes CoreInk** | `ecran_eink`, `saisie`, `signaux`, `veille`. Chacun avec une petite application de test sur la carte. | Pilotes et applications de test. | Chaque pilote passe sa vérification sur la carte (section 4.3). Consommation en veille mesurée. |
+| **4. Intégration** | `main` : réveil, événements, logique, rendu, prochain réveil, mise en veille. Tests de bout en bout sur la carte. | Version préliminaire `v2.0.0-essai.1`. | Recette technique passée (section 4.4). |
+| **5. Essais d'utilisation, tour 1** | Quelques jours en cuisine (section 5). | Rapport d'essai. | Rapport rédigé. |
+| **6. Correctifs** | Tri du rapport, corrections, ajustement des constantes, évolutions de SPEC.md avec l'accord de Benoît (section 6). | `v2.0.0-essai.2`, puis nouveau tour d'essai si nécessaire. | Critères de sortie de la section 6. |
+| **7. Bilan matériel** | Décision e-ink ou Sharp Memory LCD, à partir des points d'observation de CLAUDE.md. | Note de décision. | Choix du matériel suivant, ou CoreInk confirmé. |
+
+La logique métier (étape 2) est la plus grosse partie et ne demande pas la
+carte : on peut avancer dessus pendant que la chaîne de flashage se met en
+place.
+
+## 4. Tests techniques
+
+Les tests techniques vérifient que le logiciel **fait ce que dit SPEC.md**. Ils
+sont automatisés autant que possible et ne demandent pas de cuisiner.
+
+### 4.1 Pourquoi pas seulement un firmware de test suivi sur la console
+
+La pratique Arduino (flasher un programme de test et lire la console) marche,
+mais elle est lente : flasher prend du temps, il faut la carte, et on ne peut pas
+attendre 24 h pour tester une échéance. La pratique courante en embarqué est de
+**séparer la logique du matériel** et de tester la logique **sur l'ordinateur**
+(tests sur l'hôte), en quelques secondes. L'architecture de CLAUDE.md est
+conçue pour cela. Le test sur la carte reste utile, mais seulement pour ce qui
+touche au matériel.
+
+| Niveau | Quoi | Où | Quand |
+|---|---|---|---|
+| Tests unitaires sur l'hôte | `constantes`, `reglage`, `minuterie`, `rendu` | Mac et CI | À chaque modification ; avant chaque commit. |
+| Tests de scénario sur l'hôte | Séquences d'événements complètes (régler, démarrer, rappels, fin) avec une horloge simulée | Mac et CI | Idem. |
+| Compilation du firmware | Projet ESP-IDF complet | CI | À chaque poussée. |
+| Tests sur la carte | Pilotes `ecran_eink`, `saisie`, `signaux`, `veille` | CoreInk, console série | À chaque modification d'un pilote. |
+| Recette technique | Version complète, liste de contrôle | CoreInk | Avant chaque version d'essai. |
+
+### 4.2 Tests sur l'hôte
+
+- **Outil** : [Unity](https://github.com/ThrowTheSwitch/Unity), framework de
+  test en C très répandu en embarqué, celui qu'utilise ESP-IDF. Le même code de
+  test pourra tourner sur la carte si besoin.
+- **Projet** : `test/host/`, un projet CMake indépendant d'ESP-IDF, compilé
+  avec le compilateur du Mac (clang natif arm64) et lancé avec `ctest`. Il ne
+  compile que les composants sans dépendance matérielle : c'est aussi la
+  preuve qu'ils restent portables.
+- **Temps simulé** : `minuterie` reçoit l'heure de l'extérieur (CLAUDE.md). Un
+  test peut donc faire avancer le temps de 24 h en une microseconde et vérifier
+  chaque échéance au milliseconde près (PLG-01, ECH-05, ECH-07, ERR-03).
+- **Traçabilité** : chaque test porte dans son nom l'exigence qu'il vérifie,
+  par exemple `test_ECH_05_rappel_repart_de_l_acquittement`. Un petit script
+  liste les identifiants de la partie 1 sans test.
+- **Rendu** : `rendu` produit un tampon 200×200. Les tests l'écrivent en image
+  PBM et le comparent à une image de référence enregistrée dans le dépôt (tests
+  d'instantané). On relit ainsi les écrans sans flasher, et on voit toute
+  modification involontaire de l'affichage.
+- **Qualité** : avertissements traités comme des erreurs (`-Wall -Wextra
+  -Werror`), et AddressSanitizer et UndefinedBehaviorSanitizer activés sur
+  l'hôte pour détecter les débordements et calculs indéfinis.
+- **Intégration continue** : GitHub Actions lance les tests sur un runner
+  macOS arm64 (ce qui vérifie aussi GEN-07 pour cette partie) et compile le
+  firmware dans l'image Docker officielle d'ESP-IDF.
+
+### 4.3 Tests sur la carte
+
+Pour les pilotes, on garde la pratique connue, en la structurant : une
+**application de test par pilote** (sous `test/carte/`), avec des tests Unity
+qui s'affichent dans `idf.py monitor`, et des vérifications à l'œil ou à
+l'oreille quand l'automatisme n'est pas possible :
+
+- `ecran_eink` : mise à jour partielle chaque seconde pendant une heure, puis
+  observation des traces ; rafraîchissement complet ; inversion d'une zone ;
+- `saisie` : anti-rebond, répétition accélérée au maintien de la molette ;
+- `signaux` : motifs de sonnerie (CST-05) et LED ;
+- `veille` : réveil par minuterie et par chacune des commandes, conservation
+  de l'état en mémoire RTC, et **mesure de la consommation** en veille et
+  éveillé (multimètre ou wattmètre USB), pour estimer l'autonomie.
+
+Plus tard, l'outil `pytest-embedded` d'Espressif peut lire la console
+automatiquement ; il ne vaut l'investissement que si les tests sur la carte se
+multiplient.
+
+### 4.4 Recette technique
+
+Liste de contrôle passée sur le CoreInk avant de remettre une version à
+l'essai : chaque transition du tableau ETA (ETA-10 à ETA-21), les cas d'erreur
+(ERR-01 à ERR-08), un décompte court (PLG-03), un décompte long avec rappels,
+et une nuit en veille. Le résultat est noté dans la pull request de la version.
+
+## 5. Tests d'usage (essais d'utilisation)
+
+Les tests d'usage vérifient que **ce que dit SPEC.md convient en cuisine**. Ils
+ne cherchent pas des bogues (c'est le rôle des tests techniques), mais des
+réponses : les valeurs CST, les comportements OUV, et les points à observer sur
+le CoreInk listés dans CLAUDE.md.
+
+Les deux sortes de tests sont séparées :
+
+| | Tests techniques | Tests d'usage |
+|---|---|---|
+| Question | Le logiciel est-il conforme à la spécification ? | La spécification est-elle la bonne ? |
+| Qui | Automatique, et Claude ou Benoît sur la carte | Benoît, en cuisinant |
+| Quand | En continu | Sur une version d'essai, après la recette technique |
+| Référence | Partie 1 de SPEC.md | Partie 2 de SPEC.md et points d'observation de CLAUDE.md |
+| Résultat | Vert ou rouge | Rapport d'essai |
+| Où c'est rangé | `test/` | `docs/essais/` |
+
+Déroulement d'un tour d'essai :
+
+1. une version d'essai taguée (`v2.0.0-essai.N`), avec ses constantes ;
+2. quelques jours d'utilisation normale, sans forcer les situations ;
+3. un journal court rempli après chaque utilisation (5 minutes) ;
+4. le rapport d'essai rédigé à la fin du tour, à partir du journal.
+
+Un modèle de journal et de rapport sera créé dans `docs/essais/` avant le
+premier tour (étape 4).
+
+## 6. Rapport d'essai et phase de correctifs
+
+### 6.1 Ce qu'on attend du rapport d'essai
+
+Un fichier par tour, `docs/essais/essai-N.md` :
+
+1. **Contexte** : dates, version et commit essayés, valeurs des constantes.
+2. **Journal résumé** : une ligne par utilisation (date, plat, programme
+   réglé, durée, nombre de rappels, incident éventuel).
+3. **Réponses aux questions ouvertes** : pour chaque OUV et CST concerné,
+   ce qui a été observé, la valeur ou le comportement proposé, et le degré de
+   certitude (net, à confirmer, pas d'avis).
+4. **Points d'observation du CoreInk** (CLAUDE.md) : lisibilité et traces,
+   clignotement, affichage réduit, réveil, audibilité du buzzer, autonomie
+   mesurée.
+5. **Observations** : tout le reste, chacune classée :
+   - **défaut** : la minuterie ne fait pas ce que dit SPEC.md ;
+   - **ajustement** : une constante à changer ;
+   - **évolution** : SPEC.md devrait dire autre chose ;
+   - **matériel** : limite du CoreInk, à garder pour le bilan de l'étape 7.
+
+   Avec une gravité : **bloquant** (empêche d'utiliser la minuterie),
+   **gênant**, **mineur**.
+6. **Avis global** : la minuterie a-t-elle servi ? qu'est-ce qui a manqué ?
+
+Claude peut préparer le rapport à partir du journal ; Benoît le valide.
+
+### 6.2 Phase de correctifs
+
+Le rapport est trié en lots, chaque lot dans sa propre pull request :
+
+| Catégorie | Traitement |
+|---|---|
+| Défaut | D'abord un test qui reproduit le défaut et échoue, puis la correction. Le test reste. |
+| Ajustement | Changement de la table de constantes, avec l'observation qui le justifie dans le commit. |
+| Évolution | Mise à jour de SPEC.md avec `/spec`, **avec l'accord de Benoît** : un OUV tranché devient une exigence de la partie 1 avec un nouvel identifiant. Puis développement et tests. |
+| Matériel | Noté pour le bilan de l'étape 7 ; contournement logiciel si c'est simple. |
+
+Ordre : les défauts bloquants, puis les évolutions de SPEC.md (elles changent ce
+qu'on teste), puis le reste.
+
+Après les correctifs, recette technique (section 4.4), nouvelle version
+`v2.0.0-essai.N+1`, et nouveau tour d'essai si des questions restent ouvertes.
+
+**Critères de sortie** des essais : aucun défaut bloquant ou gênant ouvert, les
+OUV et CST concernés tranchés, les points d'observation du CoreInk renseignés.
+On passe alors au bilan matériel (étape 7).
+
+## 7. Versions et branches
+
+- `master` : la version stable. On y arrive par pull request, après relecture.
+- Branches de travail : une par étape ou par lot de correctifs.
+- Tags : `v1.0` et `v1.1` pour le prototype ; `v2.0.0-essai.N` pour les versions
+  remises en essai ; `v2.0.0` quand les critères de sortie sont atteints.
+- Les tags sont annotés et ne sont jamais déplacés une fois poussés.
+
+## Points à valider par Benoît
+
+1. Archivage par tag `v1.1` puis suppression (section 1), avec la release GitHub.
+2. Le contenu du README (brouillon sur la branche).
+3. Le découpage en étapes et les deux sortes de tests.
+
+Remarque sans modification : dans la section 13 de SPEC.md, la phrase « Seules
+les questions à valider pendant les essais restent ici… » est placée entre
+l'en-tête du tableau des OUV et ses lignes, ce qui casse l'affichage du tableau
+sur GitHub. À corriger avec ton accord.

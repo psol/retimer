@@ -1,93 +1,91 @@
-# retimer
-When I cook and particularly when I grill vegetables, I need a regular reminder to check
-on the food. Enter the retimer. The retimer is a cooking timer that re-triggers every
-x minutes to check on the grilling and, usually, toss the vegetables around.
+# Retimer
 
-Same thing with no-knead bread who needs a fold every 20-25 minutes.
+A kitchen timer that counts down the total cooking time and, above all, reminds
+you at regular intervals to act on the food: toss the grilled vegetables, baste
+the roast, fold the bread dough.
 
-For convenient, two regular timers are also supported, typically timer 1 goes off when
-cooking should be finished and timer 2 a little bit earlier to add aromatics.
-For bread-making, timer 1 goes off when the dough should be proofed while timer 2
-is shaping time.
+Retimer is a physical device, with its own electronics and firmware. No app, no
+phone.
 
-Last but not least, I wanted hands-free control of the retimer. Obstructing the light
-sensor is equivalent to pressing button A (restart).
+## Version 1 (2020): the PyBadge prototype
 
-![retimer alarm goes off](img/retimer_1055.jpg)
+When I grill vegetables, I need a regular reminder to check on the food. I used
+to set my kitchen timer to 5 minutes and restart it every time it went off.
+Except I often forgot to restart it. The first Retimer was a quick prototype to
+test a better workflow: a timer that re-triggers by itself.
 
-## UX Prototype
-A kitchen timer is not a particulary difficult project. In fact I have had a similar
-workflow for some time: I set my kitchen timer to 5 minutes and when it goes off,
-I verify my grilling and restart the timer.
+![The 2020 prototype, alarm going off](img/retimer_1055.jpg)
 
-Expect I sometimes forget to restart the timer.
+It ran on an off-the-shelf [Adafruit PyBadge](https://www.adafruit.com/product/4200)
+in CircuitPython 5.3, with:
 
-OKay, I often forget to restart the timer.
+- one repeating "retimer" and two one-shot timers, set with the d-pad;
+- hands-free acknowledgement by covering the light sensor;
+- NeoPixels and the speaker for alarms.
 
-So the retimer aims to achieve a better UX for the task of grilling vegetables.
-When designing UX, it's important to formulate hypothesis and validate them through
-prototypes. Paper prototypes would not real work here so I had to build something fast.
-Which leads us to hardware.
+What it proved: a timer that keeps reminding you is genuinely useful in the
+kitchen. What it also showed:
 
-## Hardware
-retimer is developed on the [Adafruit PyBadge](https://www.adafruit.com/product/4200),
-in [CircuitPython 5.3.0](https://circuitpython.org).
+- no sleep mode, so the battery drains quickly;
+- three fixed timers are less natural than one total timer plus one reminder;
+- the light sensor is unreliable in a dim kitchen;
+- the code no longer runs on current CircuitPython releases.
 
-The PyBadge has plenty of buttons, a light sensor (hands-free operation), a screen,
-neopixels, on-board audio and sophisticated power management that includes a battery
-connector. It is also robust (mine has survived a few drops). All this makes it a great
-prototyping board. 
+The prototype is archived under the [`v1.1` tag](https://github.com/psol/retimer/tree/v1.1)
+(`git checkout v1.1`). It is no longer maintained.
 
-Unfortunately I have found that the PyBadge is not Arduino-friendly. At least not friendly
-enough to my liking. It is certainly possible to develop in Arduino but I had to reset
-the board before every upload… which is a pain. So CircuitPython it was, plus Python
-is a great tool for rapid prototyping.
+## Version 2 (in progress)
 
-Unfortunately CircuitPython cannot handle RTC interrupts (according to the current FAQ)
-or allow the board to go to sleep, which makes it power hungry for a kitchen timer.
+The new Retimer is designed from a written specification. Its goals:
 
-### PyBadge or PyBadge LC
+- **Two timers**: a total timer, plus an optional reminder that repeats during
+  the countdown, measured from the moment you acknowledge it.
+- **No modes, no start button**: you turn the knobs, and the countdown starts by
+  itself a few seconds after you stop. Turning the total back to zero stops it.
+  Both timers can be adjusted while counting down.
+- **Unobtrusive alerts**: a short beep sequence once, then a silent visual alert
+  until you acknowledge it, so you can tell when you missed one.
+- **Long battery life**: the microcontroller sleeps between events and is woken
+  by a hardware timer or a user action.
+- **Everything on the device**: no app, no connection.
 
-I used a plain PyBadge but the PyBadge LC should work also it is less expensive.
-The PyBadge LC has only one NeoPixel (adjust `NEOPIXEL_LEN`) and is limited to the onboard
-speaker.
+The first hardware is a provisional, tactical choice: an
+[M5Stack CoreInk](https://docs.m5stack.com/en/core/coreink) (ESP32, 1.54" e-ink
+display, three-way wheel, buzzer) that was available at no cost. It is a way to
+find out, in real kitchen use, whether e-ink suits a timer. If it doesn't, the
+next step is a custom build with a Sharp Memory LCD and two rotary encoders.
 
-## Libraries
-The following [libraries](https://circuitpython.org/libraries) are also used:
-* adafruit_bitmap_font
-* adafruit_display_text
+Firmware: C11 on ESP-IDF. The timer logic is independent from the hardware and
+is unit-tested on the development machine. The whole toolchain runs natively on
+Apple Silicon Macs, without Rosetta.
 
-The font [Noto](https://www.google.com/get/noto/) is from Google. I retrieved
-the BDF file from the
-[PyBadge Conference Badge project](https://github.com/adafruit/Adafruit_Learning_System_Guides)
+Project documents (in French):
 
-## How to use?
-At launch, the board shows the configuration screen. Set any of the 3 timers with
-the d-pad. Timers you don't need can be left to zero and they will not trigger an alarm.
-To start the countdown, hit the _Start_ button.
+- [SPEC.md](SPEC.md): the requirements, each with a stable identifier;
+- [docs/PLAN.md](docs/PLAN.md): the development plan, tests and field trials;
+- [CLAUDE.md](CLAUDE.md): working rules, hardware choice and software architecture;
+- [docs/comparaison-materiel.md](docs/comparaison-materiel.md): hardware comparison.
 
-While the timer is counting down, the _Select_ button returns to the configuration screen.
+## Built with AI
 
-When one of the timers reaches zero, the alarm goes off. Pressing the _A_ (or _B_) button
-or momentarily obstructing the light sensor stops the alarm. If more than one timer has
-been selected, the alarm does not stop them. The retimer also restarts automatically,
-(unless it was set to zero).
+Version 2 is developed with an AI coding assistant,
+[Claude Code](https://claude.com/claude-code). This is a deliberate choice for a
+one-person hobby project: the assistant drafts specifications, compares
+hardware, writes code and tests, while the human decides, reviews and cooks.
 
-The _B_ button behaves differently for the retimer. It stops the retimer, so for timer 1
-and timer 2, you can use either button indifferently. For the retimer button A stops
-the alarm but restart the timer. Button B stops the alarm and returns to the configuration
-screen.
+The method is meant to keep the human in control:
 
-## A good trade-off
-Using a generic board, like the PyBadge, has many benefits in terms of "time to market"
-but it's a little bit of a trade-off.
+- **Specification first.** Requirements are written and agreed in SPEC.md before
+  any code. Each one has a stable identifier (`DEM-01`, `ACQ-04`…) quoted in
+  commits, pull requests, tests and code comments, so every line can be traced
+  back to a decision.
+- **Written working rules.** CLAUDE.md tells the assistant how to work on this
+  repository: what it may change, what it must ask about first.
+- **Human review.** Every change goes through a pull request reviewed by the
+  author before it reaches `master`.
+- **Tests before trust.** The timer logic is covered by automated tests; the
+  device itself is validated by a person using it in a real kitchen.
 
-I would be interested to try rotary encoders as an alternative to the d-pad and
-the start/stop buttons. A gesture sensor, such as the APDS-9960, would expand options
-for hands-free operations, always a good thing in the kitchen.
+## License
 
-It would be interested to connect to a thermometer or another sensor, maybe through
-Bluetooth. And I have already discussed power saving.
-
-Yet overal I'm happy with the trade-off. At minimum, I have a prototype to validate
-in the kitchen. Later I'll see whether I need to improve.
+See [LICENSE](LICENSE).
