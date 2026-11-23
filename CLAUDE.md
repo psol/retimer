@@ -39,7 +39,7 @@ Le choix est **tactique**. Le CoreInk n'est pas la solution qui colle le mieux
 aux besoins documentés : c'est un appareil excédentaire, disponible tout de
 suite, sans aucun surcoût.
 
-La comparaison du 22 novembre 2026 (critères, neuf solutions retenues, sources)
+La [comparaison du 22 novembre 2026](docs/comparaison-materiel.md) (critères, solutions retenues, sources)
 recommandait plutôt :
 
 - **à construire** : une carte Seeed XIAO nRF52840 avec un écran Sharp Memory
