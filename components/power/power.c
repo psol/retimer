@@ -62,8 +62,8 @@ int64_t power_now_ms(void)
 {
     /*
      * L'heure système de l'ESP32 continue pendant les veilles, comptée par
-     * l'horloge lente (RC interne de 150 kHz sur le CoreInk : dérive à
-     * mesurer, docs/coreink.md, section 4).
+     * l'horloge lente (8 MHz interne divisé par 256, sdkconfig.defaults :
+     * dérive à mesurer, docs/coreink.md, section 4).
      */
     struct timeval tv;
     gettimeofday(&tv, NULL);

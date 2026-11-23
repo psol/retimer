@@ -10,3 +10,7 @@ CONFIG_COMPILER_WARN_WRITE_STRINGS=y
 CONFIG_LOG_DEFAULT_LEVEL_INFO=y
 # 1 ms : lecture des boutons toutes les 5 ms (main.c).
 CONFIG_FREERTOS_HZ=1000
+# Horloge lente des veilles : 8 MHz / 256 plutôt que le RC de 150 kHz, plus
+# stable en fréquence (environ 5 µA de plus en veille profonde). Soirée 1, C8 :
+# environ 3 s d'avance sur 10 min avec le RC (docs/coreink.md, section 4).
+CONFIG_RTC_CLK_SRC_INT_8MD256=y

@@ -64,6 +64,18 @@ static void test_REG_03_acceleration_while_held(void)
     TEST_ASSERT_EQUAL_INT64(M(10), adjust_total_step(H(3), ADJUST_UP, 6));
 }
 
+/*
+ * REG-01, REG-03 : molette maintenue pendant le décompte. Le temps restant
+ * passe sous la valeur réglée entre deux répétitions ; on repart de la valeur
+ * affichée (00:30) et non de 29,85 s, sinon la valeur reste bloquée à 30 s.
+ */
+static void test_REG_03_held_while_counting_down(void)
+{
+    TEST_ASSERT_EQUAL_INT64(M(1), adjust_total(S(29) + 850, ADJUST_UP, 14));
+    TEST_ASSERT_EQUAL_INT64(S(35), adjust_total(S(29) + 850, ADJUST_UP, 0));
+    TEST_ASSERT_EQUAL_INT64(S(25), adjust_total(S(29) + 850, ADJUST_DOWN, 0));
+}
+
 /* PLG-01 : sous 5 s, on va à 5 s en montant et à 0 en descendant. */
 static void test_PLG_01_minimum_5_s_and_zero(void)
 {
@@ -138,6 +150,7 @@ int main(void)
     RUN_TEST(test_ERR_06_bounds);
     RUN_TEST(test_PLG_03_short_countdown);
     RUN_TEST(test_REG_01_round_trip);
+    RUN_TEST(test_REG_03_held_while_counting_down);
     RUN_TEST(test_PLG_02_reminder_walks_the_list);
     RUN_TEST(test_PLG_02_reminder_not_in_list);
     return UNITY_END();

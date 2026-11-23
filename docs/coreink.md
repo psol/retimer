@@ -171,8 +171,12 @@ CoreInk n'a pas de quartz 32 kHz sur l'ESP32 (d'après le schéma, le seul quart
 3. ou utiliser la sortie `CLKOUT` de la BM8563 comme horloge lente, si elle est
    reliée à l'ESP32 (non lisible sur le schéma).
 
-En veille légère, l'horloge principale peut être maintenue : le problème ne se
-pose qu'en veille profonde.
+La veille légère utilise la même horloge lente : le quartz de 40 MHz est coupé
+pendant la veille. Mesure de la soirée 1 (C8) : environ 3 s d'avance sur
+10 min (0,5 %), départ du chronomètre imprécis. Depuis, l'horloge lente est le
+8 MHz interne divisé par 256 (`CONFIG_RTC_CLK_SRC_INT_8MD256`), plus stable
+selon Espressif, pour environ 5 µA de plus en veille profonde. Si la dérive
+reste au-dessus de 0,1 %, on passe à la piste 2.
 
 ## 5. Buzzer
 

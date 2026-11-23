@@ -100,6 +100,9 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E7 | Firmware : laisser venir une alerte de rappel, puis l'acquitter ; puis l'alerte de fin. | Un rafraîchissement complet (clignotement) à l'entrée et à la sortie de chaque alerte ; plus de rémanence en blanc sur noir. | |
 | E9 | Firmware : régler une valeur, puis pendant le clignotement donner des crans rapides de molette, en haut puis en bas. | Chaque cran est pris en compte et relance le délai de 3 s : le décompte ne part qu'après 3 s sans action (DEM-03). | |
 | E10 | Firmware : total 2 min, rappel 1 min ; acquitter le rappel à 1 min. | Le rappel affiche « 00:00 » (plus d'échéance avant la fin, ECH-07), plus « APRÈS LA FIN ». Avant le départ, un rappel désactivé affiche aussi « 00:00 ». | |
+| E11 | Firmware : régler 20 s, laisser partir le décompte, puis maintenir la molette en haut. | La valeur monte au-delà de 30 s (1:00, puis plus), elle ne reste plus bloquée (REG-03, C3). | |
+| E12 | Firmware : régler 10:00 ; lancer le chronomètre du téléphone **à la fin du clignotement** (départ du décompte), l'arrêter au bip de fin. | 10:00 au chronomètre, à 1 s près (C8, nouvelle horloge lente). Au-delà, recaler sur la BM8563. | |
+| E13 | Diagnostic, étape 7 : appuyer sur la molette bas pendant la veille profonde. | Pas de réveil : c'est voulu, seuls la molette haut et le bouton sous la molette réveillent (coreink.md, section 4). Le réveil de B12 par la molette bas (`bouton 0` après 3,4 s) date de l'ancien réglage et n'est plus possible. | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent
