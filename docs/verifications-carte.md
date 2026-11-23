@@ -65,7 +65,7 @@ idf.py -p /dev/cu.usbserial-XXXX build flash monitor
 | C1 | Allumer. | Écran « RETIMER EN VEILLE », puis veille profonde (`veille profonde` dans le journal). | |
 | C2 | Molette haut, un cran. | Réveil, « TOTAL 00:05 » qui clignote (DEM-02), puis départ du décompte après 3 s (DEM-04). | |
 | C3 | Maintenir la molette haut 5 s. | La valeur monte de plus en plus vite (REG-03). Noter si le rythme convient. | |
-| C4 | Bouton sous la molette, plusieurs appuis. | Le rappel passe 1, 2, 3, 5 min… puis « ARRÊT ». | |
+| C4 | Bouton sous la molette, plusieurs appuis. | Le rappel passe 1, 2, 3, 5 min… puis « 00:00 » (rappel désactivé). | |
 | C5 | Régler 2 min et un rappel de 1 min, attendre. | À 1 min : sonnerie de rappel et zone du bas inversée (ECH-01). Appui sur la molette : la zone redevient normale (ACQ-04). | |
 | C6 | Laisser finir. | À la fin : sonnerie de fin, écran entier inversé, « 00:00 » et « FIN » (ECH-02, ETA-07). Appui sur la molette : retour à la veille (ETA-19). | |
 | C7 | Pendant un décompte, molette bas jusqu'à 0. | Arrêt et retour à la veille (ACQ-01). | |
@@ -99,7 +99,7 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E6 | Firmware : maintenir le bouton sous la molette 3 s. | Écran « RETIMER ÉTEINT », puis extinction sur batterie (sur USB : retour en Veille). | |
 | E7 | Firmware : laisser venir une alerte de rappel, puis l'acquitter ; puis l'alerte de fin. | Un rafraîchissement complet (clignotement) à l'entrée et à la sortie de chaque alerte ; plus de rémanence en blanc sur noir. | |
 | E9 | Firmware : régler une valeur, puis pendant le clignotement donner des crans rapides de molette, en haut puis en bas. | Chaque cran est pris en compte et relance le délai de 3 s : le décompte ne part qu'après 3 s sans action (DEM-03). | |
-| E10 | Firmware : total 2 min, rappel 1 min ; acquitter le rappel à 1 min. | Le rappel affiche « ARRÊT » (plus d'échéance avant la fin, ECH-07), plus « APRÈS LA FIN ». | |
+| E10 | Firmware : total 2 min, rappel 1 min ; acquitter le rappel à 1 min. | Le rappel affiche « 00:00 » (plus d'échéance avant la fin, ECH-07), plus « APRÈS LA FIN ». Avant le départ, un rappel désactivé affiche aussi « 00:00 ». | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent

@@ -278,12 +278,6 @@ static void text_centered(render_image_t *im, int y, const char *t, int scale)
     text(im, (RENDER_WIDTH - text_width(t, scale)) / 2, y, t, scale);
 }
 
-static void text_right(render_image_t *im, int x_right, int y,
-                       const char *t, int scale)
-{
-    text(im, x_right - text_width(t, scale), y, t, scale);
-}
-
 /* ---- Format des durées -------------------------------------------------- */
 
 void render_format_duration(int64_t duration_ms, bool reduced, char *out)
@@ -377,19 +371,20 @@ static void reminder_zone(render_image_t *im, const ktimer_view_t *view,
     switch (view->reminder) {
     case REMINDER_OFF:
     case REMINDER_SPENT:
-        /*
-         * ECH-07 : plus d'échéance de rappel avant la fin. Même affichage
-         * que le rappel à l'arrêt : « APRÈS LA FIN » déroutait (essai du
-         * 23 novembre 2026).
-         */
-        text_right(im, RENDER_WIDTH - MARGIN, middle - 10, "ARRÊT", 3);
-        return;
     case REMINDER_SET:
     case REMINDER_RUNNING:
     case REMINDER_ALERT: {
+        /*
+         * Rappel désactivé (intervalle nul) ou épuisé (ECH-07 : plus
+         * d'échéance avant la fin) : « 00:00 ». « ARRÊT » laissait croire
+         * qu'un bouton arrête la minuterie, « APRÈS LA FIN » déroutait
+         * (essai du 23 novembre 2026).
+         */
+        bool none = view->reminder == REMINDER_OFF ||
+                    view->reminder == REMINDER_SPENT;
         char t[10];
         bool reduced = view->reminder == REMINDER_RUNNING && view->reduced;
-        render_format_duration(view->reminder_ms, reduced, t);
+        render_format_duration(none ? 0 : view->reminder_ms, reduced, t);
         const digit_size_t *size =
             size_for(t, REMINDER_SIZES, SIZE_COUNT(REMINDER_SIZES),
                      available_width);
