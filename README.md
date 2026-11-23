@@ -119,10 +119,13 @@ The timer logic is tested on the development machine, no board needed:
 cmake -S test/host -B test/host/build
 cmake --build test/host/build
 ctest --test-dir test/host/build --output-on-failure
+python3 tools/coverage.py
 ```
 
 Each test is named after the requirement it checks (`test_ECH_05_…`).
-Screen tests will compare the rendered images with reference images.
+`tools/coverage.py` lists the requirements of SPEC.md part 1 that have no
+test. Screen tests compare the rendered images with `test/host/references/`;
+`python3 tools/screens.py` turns them into the PNG files of `docs/ecrans/`.
 
 GitHub Actions runs the host tests on macOS arm64 and builds the firmware.
 

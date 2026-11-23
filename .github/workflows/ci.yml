@@ -25,6 +25,8 @@ jobs:
         run: cmake --build test/host/build
       - name: Tester
         run: ctest --test-dir test/host/build --output-on-failure
+      - name: Couverture des exigences
+        run: python3 tools/coverage.py
       - name: Écrans produits par les tests
         if: always()
         uses: actions/upload-artifact@v4
