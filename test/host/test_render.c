@@ -132,7 +132,7 @@ static void test_DEM_02_blink_off_phase(void)
 /* MAT-04 : décompte long, affichage réduit. */
 static void test_MAT_04_reduced_countdown(void)
 {
-    int64_t start_value = start_countdown(M(45), M(10));
+    int64_t start_value = start_countdown(H(1) + M(15), M(10));
     draw(start_value + M(2) + S(20));
     TEST_ASSERT_TRUE(view.reduced);
     snapshot("04_countdown_reduced");

@@ -88,6 +88,18 @@ static uint32_t apply(const input_event_t *ev, int64_t now)
     ktimer_view_t view;
     ktimer_view(m, now, &view);
 
+    /*
+     * Affichage réduit : le premier cran (molette ou bouton du rappel) ne
+     * fait que montrer les secondes ; les suivants règlent (soirée 2).
+     */
+    if (view.reduced && ev->repeat == 0 &&
+        (ev->type == EV_TOTAL_PLUS || ev->type == EV_TOTAL_MINUS ||
+         ev->type == EV_NEXT_REMINDER)) {
+        ESP_LOGI(TAG, "affichage complet, sans réglage");
+        ktimer_reveal(m, now);
+        return SIGNAL_NONE;
+    }
+
     switch (ev->type) {
     case EV_TOTAL_PLUS:
     case EV_TOTAL_MINUS: {

@@ -115,6 +115,13 @@ extern const size_t CST_REMINDER_INTERVAL_COUNT;
 #define CST_FULL_DISPLAY_THRESHOLD_MS (2 * MINUTE_MS)
 
 /*
+ * MAT-04 : l'affichage réduit ne vaut que pour les longs décomptes : la
+ * globale doit dépasser ce temps restant. Soirée 2 : le gain d'énergie est
+ * modeste sur 20 à 30 min, pour un affichage moins pratique.
+ */
+#define CST_REDUCED_ABOVE_MS (30 * MINUTE_MS)
+
+/*
  * MAT-04 : après un réglage pendant le décompte, l'affichage reste complet
  * ce temps-là, pour voir la valeur qu'on règle (soirée 2).
  */

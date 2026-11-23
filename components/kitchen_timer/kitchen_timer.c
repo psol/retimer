@@ -174,6 +174,13 @@ uint32_t ktimer_set_total(ktimer_t *m, int64_t now,
     return signals;
 }
 
+void ktimer_reveal(ktimer_t *m, int64_t now)
+{
+    if (m->state == STATE_RUNNING) {
+        m->full_until_ms = now + CST_FULL_DISPLAY_AFTER_ADJUST_MS;
+    }
+}
+
 uint32_t ktimer_set_reminder(ktimer_t *m, int64_t now,
                              int64_t new_interval_ms)
 {
@@ -252,7 +259,7 @@ static bool reduced_display(int64_t total_remaining, bool reminder_active,
     if (!CST_REDUCED_DISPLAY) {
         return false;
     }
-    if (total_remaining <= CST_FULL_DISPLAY_THRESHOLD_MS) {
+    if (total_remaining <= CST_REDUCED_ABOVE_MS) {
         return false;
     }
     if (reminder_active &&
@@ -413,12 +420,12 @@ static int64_t next_multiple(int64_t start, int64_t period,
 
 /* Réveils d'affichage d'une minuterie qui décompte vers echeance. */
 static int64_t display_wakeup(int64_t deadline, int64_t now,
-                              bool reduced)
+                              bool reduced, int64_t threshold)
 {
     int64_t t = next_change(deadline, now, reduced);
     if (reduced) {
-        /* Passage à l'affichage complet (CST-08). */
-        int64_t toggle = deadline - CST_FULL_DISPLAY_THRESHOLD_MS;
+        /* Passage à l'affichage complet (CST-08, MAT-04). */
+        int64_t toggle = deadline - threshold;
         if (toggle > now) {
             t = min64(t, toggle);
         }
@@ -452,14 +459,15 @@ int64_t ktimer_next_wakeup(const ktimer_t *m, int64_t now)
 
     case STATE_RUNNING:
         t = m->end_ms;
-        t = min64(t, display_wakeup(m->end_ms, now, view.reduced));
+        t = min64(t, display_wakeup(m->end_ms, now, view.reduced,
+                                    CST_REDUCED_ABOVE_MS));
         if (m->full_until_ms > now) {
             t = min64(t, m->full_until_ms); /* retour à l'affichage réduit */
         }
         if (view.reminder == REMINDER_RUNNING) {
             t = min64(t, m->reminder_ms);
-            t = min64(t, display_wakeup(m->reminder_ms, now,
-                                        view.reduced));
+            t = min64(t, display_wakeup(m->reminder_ms, now, view.reduced,
+                                        CST_FULL_DISPLAY_THRESHOLD_MS));
         }
         if (m->reminder_alert) {
             t = min64(t, next_phase(m->alert_start_ms,

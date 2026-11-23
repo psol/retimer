@@ -311,6 +311,13 @@ traiter dans une étape suivante, après les essais :
 - **Accélération de la molette** (ajustement, CST-04) : elle accélère trop vite
   sur les petites valeurs. Pistes : faire dépendre l'accélération de la valeur
   (petits pas sous 1 à 2 min), ou allonger les paliers de maintien.
+- **Campagne d'essais du réglage à la molette** (demande de Benoît, soirée 2) :
+  molette maintenue, « ça saute ultra vite ». Préparer un firmware d'essai où
+  les constantes du réglage (CST-03 paliers, CST-04 accélération, délai et
+  période de répétition) se changent sans recompiler, par exemple par des
+  jeux de valeurs choisis au bouton au-dessus de l'écran ou par la console
+  série, avec un journal de chaque essai. Puis une soirée dédiée pour choisir
+  les valeurs.
 - **Délai de démarrage** (ajustement, CST) : 3 s, jugé court pour régler
   plusieurs minutes.
 - **Premier appui perdu au réveil** (défaut) : depuis la Veille, il faut

@@ -103,10 +103,12 @@ exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min. La liste
 s'arrête aux intervalles inférieurs à la minuterie globale affichée : avec
 2:00, seul 1 min est proposé (soirée 2).
 
-Affichage réduit (MAT-04) : « 12:-- » montre les minutes de l'affichage
-complet (12:59 donne « 12:-- »). Il reste complet pendant les 15 premières
-secondes du décompte, redevient complet sous 2 min (CST-08) et pendant 5 s
-après chaque réglage, pour voir la valeur qu'on règle.
+Affichage réduit (MAT-04) : seulement quand la globale dépasse 30 min (le gain
+d'énergie est modeste sur un décompte court). « 45:-- » montre les minutes de
+l'affichage complet (45:59 donne « 45:-- »). Il reste complet pendant les
+15 premières secondes du décompte et pendant 5 s après chaque réglage. En
+affichage réduit, le premier cran de molette ou de bouton ne règle rien : il
+montre les secondes ; les crans suivants règlent.
 
 Ce qui reste conforme à SPEC.md :
 

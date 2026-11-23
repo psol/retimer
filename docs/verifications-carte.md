@@ -107,6 +107,8 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E15 | Firmware : globale à 2:00, puis appuyer plusieurs fois sur le bouton sous la molette. | Le rappel passe à 01:00, puis revient à 00:00 ; il ne dépasse jamais la globale. | |
 | E16 | Firmware : décompte de 5 min. Regarder l'affichage à 4:30, puis sous 2:00. | « 04:-- » à 4:30 (les minutes de 04:30) ; les secondes réapparaissent à 2:00. | |
 | E17 | Firmware : pendant un décompte en « 04:-- », donner un cran de molette. | Les secondes réapparaissent tout de suite avec la nouvelle valeur, pendant 5 s, puis retour à « mm:-- ». Rappel : une fois le décompte parti, un cran modifie le temps sans relancer le délai de 3 s (MOD-01). | |
+| E18 | Firmware : décompte de 45 min. Regarder au départ, à 44:30, puis donner un cran de molette, puis un deuxième. | Complet pendant 15 s, puis « 44:-- ». Le premier cran montre les secondes sans rien changer ; le deuxième règle. | |
+| E19 | Firmware : décompte de 25 min. | Toujours en affichage complet (réduit seulement au-delà de 30 min). | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent
