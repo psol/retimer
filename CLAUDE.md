@@ -78,15 +78,19 @@ Points à observer pendant les essais :
 ## Interface réduite (CoreInk, option 3)
 
 Le CoreInk n'a pas les deux encodeurs prévus par CMD-01 et CMD-02. Ses
-commandes sont une molette à trois positions (haut, appui, bas), un bouton sur
-le dessus et un bouton marche. L'interface retenue pour cette étape est
+commandes sont une molette à trois positions (haut, appui, bas), un bouton
+situé physiquement sous la molette et un bouton marche. L'interface retenue pour cette étape est
 « molette pour la globale, intervalles prédéfinis pour le rappel ».
+
+La disposition physique guide l'écran : la molette est au-dessus du bouton, donc
+la minuterie globale s'affiche en haut de l'écran et la minuterie rappel en
+dessous. Chaque commande se trouve ainsi à côté de la valeur qu'elle règle.
 
 | Commande CoreInk | Fonction | Remplace |
 |---|---|---|
 | Molette haut / bas | Augmente / diminue la minuterie globale, à partir de la valeur affichée. | CMD-01 |
 | Molette maintenue en haut ou en bas | Répétition dont le pas grandit avec la durée du maintien. | REG-03 (rotation continue) |
-| Bouton du dessus | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
+| Bouton sous la molette | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
 | Appui sur la molette | Acquitte l'échéance en attente. | CMD-03 |
 | Bouton marche | Allumage et extinction de l'appareil. | — |
 
@@ -109,8 +113,23 @@ Ce qui reste conforme à SPEC.md :
   REG-03 pour le rappel) ; pour diminuer, il faut faire le tour de la liste ;
 - l'accélération du réglage dépend de la durée du maintien de la molette, pas
   d'une rotation continue ;
+- pas de LED d'alerte (voir « Alertes à l'écran » ci-dessous) ;
 - pas de capteur « mains sales » dans cette étape (CMD-04 est souhaitable) ; un
   capteur pourra être branché plus tard sur le port Grove.
+
+### Alertes à l'écran
+
+La fiche technique du CoreInk mentionne une LED, mais elle n'est pas visible
+sur le boîtier : on ne compte pas dessus pour les alertes (CMD-07, MAT-05).
+Les alertes passent par l'écran, en inversant le noir et le blanc, par exemple :
+
+- **alerte de rappel** : seule la zone du rappel (en bas) est inversée ;
+- **alerte de fin** : tout l'écran est inversé.
+
+Avantage de l'e-ink : l'image inversée reste affichée sans consommer, ce qui
+convient à une alerte persistante et non intrusive (GEN-04). Le motif exact
+(fixe ou clignotant lent) est à régler en essai (CST-06). À vérifier en essai :
+que l'inversion reste visible de loin et ne laisse pas de traces.
 
 Cette interface permet de commencer les essais d'utilisation tout de suite, en
 une main, avec des doigts sales : en cuisine, le rappel se règle presque
