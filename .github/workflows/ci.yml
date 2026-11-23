@@ -1,0 +1,57 @@
+# Intégration continue (docs/PLAN.md, section 4.2).
+# - Tests sur l'hôte sur un runner macOS arm64 : vérifie aussi GEN-07 pour la
+#   logique (clang natif Apple Silicon, sans Rosetta).
+# - Compilation du firmware dans l'image Docker officielle d'ESP-IDF.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host-tests:
+    name: Tests sur l'hôte (macOS arm64)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier l'architecture
+        run: |
+          uname -m
+          test "$(uname -m)" = arm64
+          file "$(xcrun -f clang)"
+      - name: Configurer
+        run: cmake -S test/host -B test/host/build
+      - name: Compiler
+        run: cmake --build test/host/build
+      - name: Tester
+        run: ctest --test-dir test/host/build --output-on-failure
+      - name: Écrans produits par les tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: test/host/build/screens/
+          if-no-files-found: ignore
+
+  firmware:
+    name: Firmware ESP-IDF
+    runs-on: ubuntu-latest
+    container: espressif/idf:v5.4.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compiler
+        shell: bash
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py set-target esp32
+          idf.py build
+          idf.py size
+      - name: Binaire
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            build/retimer.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+            build/flash_args

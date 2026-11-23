@@ -1,0 +1,10 @@
+# Réglages par défaut du firmware Retimer pour le M5Stack CoreInk.
+CONFIG_IDF_TARGET="esp32"
+# ESP32-PICO-D4 : 4 Mo de flash intégrée.
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=y
+# Veille légère pilotée par le programme (power.c).
+CONFIG_PM_ENABLE=n
+# Avertissements traités comme des erreurs, comme sur l'hôte.
+CONFIG_COMPILER_WARN_WRITE_STRINGS=y
+# Journaux sur la console série (idf.py monitor).
+CONFIG_LOG_DEFAULT_LEVEL_INFO=y

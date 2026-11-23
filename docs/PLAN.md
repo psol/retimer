@@ -111,8 +111,8 @@ couvertes sont citées dans les commits et les tests.
 |---|---|---|---|
 | **0. Préparation** | Archivage (section 1), README (section 2), ce plan. Pas de code applicatif. | PR de documentation. | PR fusionnée dans `master`. |
 | **1. Chaîne et squelette** | Installer ESP-IDF et esptool natifs arm64 sur le Mac, vérifier avec `file`. Projet ESP-IDF vide avec les composants de CLAUDE.md (en-têtes seulement). Projet de tests sur l'hôte (section 4). Intégration continue GitHub Actions. Un « bonjour » flashé sur le CoreInk et lu dans `idf.py monitor`. | Dépôt qui compile, CI au vert, procédure d'installation dans le README. | Le CoreInk affiche un texte flashé depuis le Mac, sans Rosetta. |
-| **2. Logique métier, sur l'hôte** | `constantes`, `reglage`, `minuterie`, `rendu`, écrits avec leurs tests, sans carte. Ordre : constantes → reglage (REG, PLG) → minuterie (ETA, DEM, ECH, ACQ, MOD, ERR) → rendu (CMD-05, alertes inversées, clignotement, affichage réduit). | Composants testés ; images de référence du rendu. | Toutes les exigences de la partie 1 applicables au CoreInk ont au moins un test. |
-| **3. Pilotes CoreInk** | `ecran_eink`, `saisie`, `signaux`, `veille`. Chacun avec une petite application de test sur la carte. | Pilotes et applications de test. | Chaque pilote passe sa vérification sur la carte (section 4.3). Consommation en veille mesurée. |
+| **2. Logique métier, sur l'hôte** | `constants`, `adjust`, `kitchen_timer`, `render`, écrits avec leurs tests, sans carte. Ordre : constantes → reglage (REG, PLG) → minuterie (ETA, DEM, ECH, ACQ, MOD, ERR) → rendu (CMD-05, alertes inversées, clignotement, affichage réduit). | Composants testés ; images de référence du rendu. | Toutes les exigences de la partie 1 applicables au CoreInk ont au moins un test. |
+| **3. Pilotes CoreInk** | `eink_display`, `input`, `signals`, `power`. Chacun avec une petite application de test sur la carte. | Pilotes et applications de test. | Chaque pilote passe sa vérification sur la carte (section 4.3). Consommation en veille mesurée. |
 | **4. Intégration** | `main` : réveil, événements, logique, rendu, prochain réveil, mise en veille. Tests de bout en bout sur la carte. | Version préliminaire `v2.0`. | Recette technique passée (section 4.4). |
 | **5. Essais d'utilisation, tour 1** | Quelques jours en cuisine (section 5). | Rapport d'essai. | Rapport rédigé. |
 | **6. Correctifs** | Tri du rapport, corrections, ajustement des constantes, évolutions de SPEC.md avec l'accord de Benoît (section 6). | `v2.1`, puis nouveau tour d'essai si nécessaire. | Critères de sortie de la section 6. |
@@ -133,7 +133,7 @@ le soir, on fait sur le Mac seulement ce qui en a vraiment besoin.
 |---|---|
 | **Recherche documentaire** sur le CoreInk : brochage de la molette, du bouton, du buzzer et de la LED, contrôleur de l'écran et ses modes de mise à jour partielle, broches capables de réveiller l'ESP32 depuis la veille profonde, mesure de la tension de la batterie. Résultat : une fiche `docs/coreink.md` avec ses sources, qui sert d'entrée aux pilotes. | Installer ESP-IDF et esptool, vérifier qu'ils sont natifs (`file`). |
 | **Étape 1, partie hôte** : squelette du dépôt, projet de tests `test/host/`, intégration continue GitHub Actions (tests sur un runner macOS arm64, compilation du firmware dans l'image Docker d'ESP-IDF). | Flasher le « bonjour » et lire la console : fin de l'étape 1. |
-| **Étape 2 en entier** : `constantes`, `reglage`, `minuterie`, `rendu`, avec leurs tests. Les images du rendu sont jointes aux pull requests, pour relire les écrans sans carte. | — |
+| **Étape 2 en entier** : `constants`, `adjust`, `kitchen_timer`, `render`, avec leurs tests. Les images du rendu sont jointes aux pull requests, pour relire les écrans sans carte. | — |
 | **Étape 3, premier jet** : pilotes écrits d'après la fiche `docs/coreink.md` et compilés par la CI, mais pas encore vérifiés. | Applications de test des pilotes sur la carte, mesures de consommation, corrections. |
 | **Étape 4** : assemblage dans `main`, compilé par la CI. | Recette technique (section 4.4), tag `v2.0`. |
 | Modèles de journal et de rapport d'essai (`docs/essais/`). | — |
@@ -164,10 +164,10 @@ touche au matériel.
 
 | Niveau | Quoi | Où | Quand |
 |---|---|---|---|
-| Tests unitaires sur l'hôte | `constantes`, `reglage`, `minuterie`, `rendu` | Mac et CI | À chaque modification ; avant chaque commit. |
+| Tests unitaires sur l'hôte | `constants`, `adjust`, `kitchen_timer`, `render` | Mac et CI | À chaque modification ; avant chaque commit. |
 | Tests de scénario sur l'hôte | Séquences d'événements complètes (régler, démarrer, rappels, fin) avec une horloge simulée | Mac et CI | Idem. |
 | Compilation du firmware | Projet ESP-IDF complet | CI | À chaque poussée. |
-| Tests sur la carte | Pilotes `ecran_eink`, `saisie`, `signaux`, `veille` | CoreInk, console série | À chaque modification d'un pilote. |
+| Tests sur la carte | Pilotes `eink_display`, `input`, `signals`, `power` | CoreInk, console série | À chaque modification d'un pilote. |
 | Recette technique | Version complète, liste de contrôle | CoreInk | Avant chaque version d'essai. |
 
 ### 4.2 Tests sur l'hôte
@@ -179,13 +179,13 @@ touche au matériel.
   avec le compilateur du Mac (clang natif arm64) et lancé avec `ctest`. Il ne
   compile que les composants sans dépendance matérielle : c'est aussi la
   preuve qu'ils restent portables.
-- **Temps simulé** : `minuterie` reçoit l'heure de l'extérieur (CLAUDE.md). Un
+- **Temps simulé** : `kitchen_timer` reçoit l'heure de l'extérieur (CLAUDE.md). Un
   test peut donc faire avancer le temps de 24 h en une microseconde et vérifier
   chaque échéance au milliseconde près (PLG-01, ECH-05, ECH-07, ERR-03).
 - **Traçabilité** : chaque test porte dans son nom l'exigence qu'il vérifie,
   par exemple `test_ECH_05_rappel_repart_de_l_acquittement`. Un petit script
   liste les identifiants de la partie 1 sans test.
-- **Rendu** : `rendu` produit un tampon 200×200. Les tests l'écrivent en image
+- **Rendu** : `render` produit un tampon 200×200. Les tests l'écrivent en image
   PBM et le comparent à une image de référence enregistrée dans le dépôt (tests
   d'instantané). On relit ainsi les écrans sans flasher, et on voit toute
   modification involontaire de l'affichage.
@@ -199,15 +199,15 @@ touche au matériel.
 ### 4.3 Tests sur la carte
 
 Pour les pilotes, on garde la pratique connue, en la structurant : une
-**application de test par pilote** (sous `test/carte/`), avec des tests Unity
+**application de test par pilote** (sous `test/board/`), avec des tests Unity
 qui s'affichent dans `idf.py monitor`, et des vérifications à l'œil ou à
 l'oreille quand l'automatisme n'est pas possible :
 
-- `ecran_eink` : mise à jour partielle chaque seconde pendant une heure, puis
+- `eink_display` : mise à jour partielle chaque seconde pendant une heure, puis
   observation des traces ; rafraîchissement complet ; inversion d'une zone ;
-- `saisie` : anti-rebond, répétition accélérée au maintien de la molette ;
-- `signaux` : motifs de sonnerie (CST-05) et LED ;
-- `veille` : réveil par minuterie et par chacune des commandes, conservation
+- `input` : anti-rebond, répétition accélérée au maintien de la molette ;
+- `signals` : motifs de sonnerie (CST-05) et LED ;
+- `power` : réveil par minuterie et par chacune des commandes, conservation
   de l'état en mémoire RTC, et **mesure de la consommation** en veille et
   éveillé (multimètre ou wattmètre USB), pour estimer l'autonomie.
 

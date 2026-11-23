@@ -87,6 +87,45 @@ The method is meant to keep the human in control:
 - **Tests before trust.** The timer logic is covered by automated tests; the
   device itself is validated by a person using it in a real kitchen.
 
+## Project layout
+
+| Path | Content |
+|---|---|
+| `components/constants`, `adjust`, `kitchen_timer`, `render` | Timer logic and screen rendering. Plain C11, no hardware dependency, unit-tested on the development machine. |
+| `components/input`, `eink_display`, `signals`, `power` | CoreInk drivers: buttons, e-ink display, buzzer and LED, sleep and power. |
+| `main/` | Firmware entry point: wires the components together. |
+| `test/host/` | Host unit tests (Unity, CMake), with reference screen images. |
+| `docs/` | Plan, hardware notes. |
+
+## Building
+
+The firmware uses [ESP-IDF v5.4.1](https://docs.espressif.com/projects/esp-idf/en/v5.4.1/esp32/get-started/),
+whose tools are published natively for Apple Silicon.
+
+```
+. ~/esp/esp-idf/export.sh
+idf.py set-target esp32
+idf.py -p /dev/cu.usbserial-XXXX build flash monitor
+```
+
+Check that the toolchain is native: `file $(which xtensa-esp32-elf-gcc)`
+must say `arm64`.
+
+## Running the tests
+
+The timer logic is tested on the development machine, no board needed:
+
+```
+cmake -S test/host -B test/host/build
+cmake --build test/host/build
+ctest --test-dir test/host/build --output-on-failure
+```
+
+Each test is named after the requirement it checks (`test_ECH_05_…`).
+Screen tests will compare the rendered images with reference images.
+
+GitHub Actions runs the host tests on macOS arm64 and builds the firmware.
+
 ## License
 
 See [LICENSE](LICENSE).
