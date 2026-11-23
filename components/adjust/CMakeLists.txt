@@ -1,2 +1,1 @@
-# En-têtes seulement : implémentation à l'étape 2.
-idf_component_register(INCLUDE_DIRS "include" REQUIRES constants)
+idf_component_register(SRCS "adjust.c" INCLUDE_DIRS "include" REQUIRES constants)
