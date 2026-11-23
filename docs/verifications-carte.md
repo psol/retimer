@@ -103,6 +103,7 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E11 | Firmware : régler 20 s, laisser partir le décompte, puis maintenir la molette en haut. | La valeur monte au-delà de 30 s (1:00, puis plus), elle ne reste plus bloquée (REG-03, C3). | |
 | E12 | Firmware : régler 10:00 ; lancer le chronomètre du téléphone **à la fin du clignotement** (départ du décompte), l'arrêter au bip de fin. | 10:00 au chronomètre, à 1 s près (C8, nouvelle horloge lente). Au-delà, recaler sur la BM8563. | |
 | E13 | Diagnostic, étape 7 : appuyer sur la molette bas pendant la veille profonde. | Pas de réveil : c'est voulu, seuls la molette haut et le bouton sous la molette réveillent (coreink.md, section 4). Le réveil de B12 par la molette bas (`bouton 0` après 3,4 s) date de l'ancien réglage et n'est plus possible. | |
+| E14 | Firmware, sur batterie : lancer un décompte de 5 min, puis brancher l'USB **sur un chargeur secteur** (pas le Mac). Refaire en branchant sur le Mac, `monitor` fermé. | Le décompte continue. Soirée 1 : au branchement sur le Mac, l'écran est revenu à « RETIMER EN VEILLE », sans doute une remise à zéro par la puce USB (broche EN), ce qui expliquerait aussi B13. | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent
