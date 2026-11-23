@@ -22,8 +22,8 @@ Sources en fin de fiche.
 | 37 | Molette haut (bouton A) | entrée, actif bas | doc, code | GPIO d'entrée seule, résistance de tirage externe 10 kΩ (R23 à R25, schéma). GPIO RTC : peut réveiller de la veille profonde. |
 | 38 | Molette appui (bouton B) | entrée, actif bas | doc, code | Idem. |
 | 39 | Molette bas (bouton C) | entrée, actif bas | doc, code | Idem. |
-| 5 | Bouton utilisateur (« EXT », « top button » dans M5Unified) | entrée, actif bas | doc, code | **Pas un GPIO RTC** : ne peut pas réveiller de la veille profonde (voir 4). Par élimination, c'est le « bouton sous la molette » de CLAUDE.md : à vérifier. |
-| 27 | Bouton marche (« PWR », bouton latéral) | entrée, actif bas | doc, code | GPIO RTC. Le même bouton allume la carte par le circuit d'alimentation (schéma : S1, D5, D6, « appui latéral »). |
+| 5 | Bouton utilisateur (« EXT », « top button » dans M5Unified), **au-dessus de l'écran** | entrée, actif bas | carte (23/11/2026) | **Pas un GPIO RTC** : ne peut pas réveiller de la veille profonde (voir 4). Inutilisé par Retimer. |
+| 27 | Bouton marche (« PWR »), **sous la molette** | entrée, actif bas | carte (23/11/2026) | GPIO RTC. Le même bouton allume la carte par le circuit d'alimentation (schéma : S1, D5, D6). Retimer s'en sert aussi pour le rappel (CLAUDE.md). |
 | 12 | Maintien de l'alimentation (« HOLD ») | sortie | doc, code | À mettre à 1 dès le démarrage, sinon la carte s'éteint quand on relâche le bouton marche. À 0 : extinction complète (sur batterie). Broche de configuration (MTDI) de l'ESP32 : à vérifier qu'elle ne gêne pas le réveil. |
 | 2 | Buzzer | sortie MLI | doc, code | Piloté par un transistor S8050 (Q1, schéma). M5Stack le commande par une fréquence (LEDC), donc buzzer **passif** : à vérifier. |
 | 10 | LED verte | sortie | doc, code | Polarité non documentée : à vérifier. Emplacement sur le boîtier peu visible (CLAUDE.md). |
@@ -36,7 +36,7 @@ Sources en fin de fiche.
 | 23 | Écran : MOSI | sortie | doc, code | |
 | 0 | Écran : RST | sortie | doc, code | Aussi broche de démarrage (BOOT) de l'ESP32. |
 | 4 | Écran : BUSY | entrée | doc, code | Polarité selon le contrôleur (voir 2). |
-| 1, 3 | Console série (CP2104) | — | doc | `idf.py monitor`. |
+| 1, 3 | Console série (puce WCH CH9102 sur la carte de Benoît, CP2104 selon la doc) | — | carte | `idf.py monitor`. Pas de pilote à installer sur macOS. |
 | 32, 33 | Port Grove (PORT.CUSTOM) | libres | doc | Pour un futur capteur « mains sales » (CMD-04). |
 
 Toutes les commandes sont actives à l'état bas avec tirage externe : pas besoin
@@ -96,7 +96,9 @@ d'initialisation des deux écrans ; le pilote s'en inspire.
 - Allumage : appui long sur le bouton marche latéral (doc). Le logiciel doit
   alors mettre le GPIO 12 à 1 pour garder l'alimentation.
 - Extinction : bouton de réinitialisation à l'arrière, ou par logiciel en
-  mettant le GPIO 12 à 0 (doc). Sur USB, la carte reste alimentée.
+  mettant le GPIO 12 à 0 (doc). Sur USB, la carte reste alimentée. Retimer
+  s'éteint quand on maintient le bouton marche (`POWER_OFF_HOLD_MS`, 3 s).
+- Sur USB, la mesure de la batterie donne 4,29 à 4,33 V (carte, 23/11/2026).
 - **Mesure de la batterie** : ADC1 canal 7 (GPIO 35), atténuation 11 dB,
   V_bat = V_adc × 25,1 / 5,1 (code M5Unified, cohérent avec R41 et R42 du
   schéma). Seuil de batterie faible (CST-09) : à fixer, valeur de départ
@@ -124,11 +126,15 @@ essais.
   (27) sont des GPIO RTC. Mais les boutons sont actifs à l'état bas, et sur
   l'ESP32 d'origine `ext1` ne sait réveiller « dès qu'une broche passe à 0 »
   que pour une seule broche. En veille profonde, on peut donc surveiller **deux
-  commandes** : une par `ext0`, une par `ext1`. Choix par défaut : molette haut
-  (`ext0`) et molette bas (`ext1`), car en Veille seul un réglage a un effet.
-- Le **bouton sous la molette (GPIO 5) ne peut pas réveiller de la veille
+  commandes** : une par `ext0`, une par `ext1`. Choix : molette haut (`ext0`)
+  et bouton sous la molette, celui du rappel (`ext1`, ETA-10). La molette bas
+  ne sert à rien en Veille : la globale y est à zéro.
+- Le **bouton au-dessus de l'écran (GPIO 5) ne peut pas réveiller de la veille
   profonde.** Le coprocesseur ULP ne peut pas non plus le lire (ce n'est pas un
-  GPIO RTC).
+  GPIO RTC). Retimer ne l'utilise pas.
+- Vérifié sur la carte le 23 novembre 2026 : en veille légère, le GPIO 5 et la
+  molette réveillent (cause 7) ; en veille profonde, la molette haut réveille
+  (`ext0`).
 - En **veille légère**, toutes les commandes réveillent la carte.
 
 Stratégie retenue pour le premier jet (`power`) :
@@ -136,7 +142,7 @@ Stratégie retenue pour le premier jet (`power`) :
 - en **Décompte** et en **Terminé** (alertes possibles, l'appui sur le bouton du
   rappel doit marcher) : veille légère entre deux réveils programmés ;
 - en **Veille** (aucun décompte) : veille profonde, réveil par la molette haut
-  ou bas ; l'état tient dans la mémoire RTC ;
+  ou le bouton du rappel ; l'état tient dans la mémoire RTC ;
 - l'extinction complète, avec réveil par la BM8563, viendra après mesure
   (CLAUDE.md).
 

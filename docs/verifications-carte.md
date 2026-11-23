@@ -21,7 +21,9 @@ Durée estimée : 1 h 30 pour la soirée 1.
 | A2 | `. ~/esp/esp-idf/export.sh`, puis `file $(which xtensa-esp32-elf-gcc)` | `Mach-O 64-bit executable arm64` (GEN-07). | |
 | A3 | `file $(which python3)` et `esptool.py version` | Python `arm64` ; esptool répond. | |
 | A4 | Dans le dépôt : `cmake -S test/host -B test/host/build && cmake --build test/host/build && ctest --test-dir test/host/build` | Tous les tests passent sur le Mac. | |
-| A5 | Brancher le CoreInk en USB-C. `ls /dev/cu.*` | Un port `/dev/cu.usbserial-…` (puce CP2104). Sinon, installer le pilote Silicon Labs CP210x et noter sa version. | |
+| A5 | Brancher le CoreInk en USB-C. `ls /dev/cu.*` | Un port `/dev/cu.usbserial-…`. Sur la carte de Benoît, puce WCH CH9102, sans pilote à installer. | |
+
+Si `export.sh` échoue sur `ruamel.yaml` (Python 3.9 d'Apple), installer dans l'environnement d'ESP-IDF : `~/.espressif/python_env/idf5.4_py3.9_env/bin/pip install ruamel.yaml==0.18.16 ruamel.yaml.clib==0.2.8` (soirée 1).
 
 ### B. Diagnostic des pilotes
 
@@ -75,6 +77,28 @@ idf.py -p /dev/cu.usbserial-XXXX build flash monitor
 - Laisser la carte en veille, sur batterie, toute la nuit. Le lendemain :
   allume-t-elle encore ? Tension de la batterie au réveil (journal) ?
 - Noter toute remarque sur la lisibilité, le bruit, la prise en main.
+
+## Soirée 2
+
+Résultats de la soirée 1 : `resultats-soiree-1.md` dans la bibliothèque du
+projet. Corrections faites depuis : le rappel est passé sur le bouton sous la
+molette (GPIO 27, aussi bouton marche), l'écran fait un rafraîchissement complet
+à l'entrée et à la sortie d'une alerte inversée, le diagnostic affiche l'étape
+à l'écran.
+
+Avant la soirée : **charger la batterie** (câble USB branché, au moins 2 h).
+Flasher de nouveau le diagnostic, puis le firmware.
+
+| # | Faire | Attendu | Résultat |
+|---|---|---|---|
+| E1 | Diagnostic, étape 5 : appuyer sur le bouton sous la molette. | `GPIO 27 (bouton sous la molette (marche, rappel)) : 0`, puis `: 1`. | |
+| E2 | Diagnostic, étape 7 : pendant la veille profonde, appuyer sur le bouton sous la molette. | Réveil immédiat, `bouton 8`. | |
+| E3 | Diagnostic, étape 7, **sur batterie chargée** : débrancher l'USB pendant la veille, attendre 30 s, rebrancher, `idf.py -p … monitor` sans Reset. | `réveil de veille profonde n° 2` (la carte ne s'est pas éteinte). | |
+| E4 | Firmware, carte éteinte sur batterie : allumer avec le bouton sous la molette. | Écran « RETIMER EN VEILLE » ; le rappel n'a pas bougé (l'appui d'allumage ne compte pas) ; la carte ne s'éteint pas au bout de 3 s. | |
+| E5 | Firmware, en Veille : appui court sur le bouton sous la molette. | Réveil, réglage avec « RAPPEL 01:00 » (ETA-10). | |
+| E6 | Firmware : maintenir le bouton sous la molette 3 s. | Écran « RETIMER ÉTEINT », puis extinction sur batterie (sur USB : retour en Veille). | |
+| E7 | Firmware : laisser venir une alerte de rappel, puis l'acquitter ; puis l'alerte de fin. | Un rafraîchissement complet (clignotement) à l'entrée et à la sortie de chaque alerte ; plus de rémanence en blanc sur noir. | |
+| E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent
 

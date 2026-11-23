@@ -79,9 +79,12 @@ Points à observer pendant les essais :
 ## Interface réduite (CoreInk, option 3)
 
 Le CoreInk n'a pas les deux encodeurs prévus par CMD-01 et CMD-02. Ses
-commandes sont une molette à trois positions (haut, appui, bas), un bouton
-situé physiquement sous la molette et un bouton marche. L'interface retenue pour cette étape est
-« molette pour la globale, intervalles prédéfinis pour le rappel ».
+commandes sont une molette à trois positions (haut, appui, bas), le bouton
+marche situé sous la molette (GPIO 27), un bouton au-dessus de l'écran (GPIO 5,
+inutilisé : il ne réveille pas de la veille profonde) et un bouton de
+réinitialisation (vérifié sur la carte le 23 novembre 2026). L'interface
+retenue pour cette étape est « molette pour la globale, intervalles prédéfinis
+pour le rappel ».
 
 La disposition physique guide l'écran : la molette est au-dessus du bouton, donc
 la minuterie globale s'affiche en haut de l'écran et la minuterie rappel en
@@ -91,9 +94,9 @@ dessous. Chaque commande se trouve ainsi à côté de la valeur qu'elle règle.
 |---|---|---|
 | Molette haut / bas | Augmente / diminue la minuterie globale, à partir de la valeur affichée. | CMD-01 |
 | Molette maintenue en haut ou en bas | Répétition dont le pas grandit avec la durée du maintien. | REG-03 (rotation continue) |
-| Bouton sous la molette | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
+| Bouton sous la molette (bouton marche), appui court | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
 | Appui sur la molette | Acquitte l'échéance en attente. | CMD-03 |
-| Bouton marche | Allumage et extinction de l'appareil. | — |
+| Bouton sous la molette, maintenu 3 s | Extinction de l'appareil ; le même bouton l'allume (circuit d'alimentation). L'appui d'allumage ne compte pas comme un réglage du rappel. | — |
 
 La liste des intervalles de rappel est une table de constantes (GEN-06), par
 exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min.

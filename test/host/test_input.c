@@ -44,7 +44,22 @@ static void test_CMD_02_reminder_button(void)
     TEST_ASSERT_EQUAL(1, read_input(CST_DEBOUNCE_MS, REMINDER));
     TEST_ASSERT_EQUAL(EV_NEXT_REMINDER, ev[0].type);
     /* Pas de répétition : un appui = un intervalle. */
-    TEST_ASSERT_EQUAL(0, read_input(5000, REMINDER));
+    TEST_ASSERT_EQUAL(0, read_input(CST_DEBOUNCE_MS + POWER_OFF_HOLD_MS - 1,
+                                    REMINDER));
+}
+
+/* Le bouton du rappel est aussi le bouton marche : maintenu, il éteint. */
+static void test_reminder_button_held_powers_off(void)
+{
+    read_input(0, REMINDER);
+    read_input(CST_DEBOUNCE_MS, REMINDER);
+    TEST_ASSERT_EQUAL_INT64(CST_DEBOUNCE_MS + POWER_OFF_HOLD_MS,
+                            input_next_wakeup(&s));
+    TEST_ASSERT_EQUAL(1, read_input(CST_DEBOUNCE_MS + POWER_OFF_HOLD_MS,
+                                    REMINDER));
+    TEST_ASSERT_EQUAL(EV_POWER_OFF, ev[0].type);
+    /* Une seule fois, même si l'appui continue. */
+    TEST_ASSERT_EQUAL(0, read_input(10000, REMINDER));
 }
 
 /* CMD-03 : l'appui sur la molette acquitte. */
@@ -116,6 +131,20 @@ static void test_wake_press_counts_once(void)
     TEST_ASSERT_FALSE(input_busy(&s));
 }
 
+/* À l'allumage, le bouton marche encore tenu ne compte pas et n'éteint pas. */
+static void test_power_on_press_is_ignored(void)
+{
+    input_ignore_until_release(&s, BUTTON_REMINDER);
+    TEST_ASSERT_EQUAL(0, read_input(0, REMINDER));
+    TEST_ASSERT_EQUAL(0, read_input(10000, REMINDER));
+    read_input(10100, 0);
+    read_input(10100 + CST_DEBOUNCE_MS, 0);
+    /* L'appui suivant compte normalement. */
+    read_input(11000, REMINDER);
+    TEST_ASSERT_EQUAL(1, read_input(11000 + CST_DEBOUNCE_MS, REMINDER));
+    TEST_ASSERT_EQUAL(EV_NEXT_REMINDER, ev[0].type);
+}
+
 /* Deux boutons en même temps : deux événements. */
 static void test_two_buttons(void)
 {
@@ -129,10 +158,12 @@ int main(void)
     RUN_TEST(test_CMD_01_wheel_up_and_down);
     RUN_TEST(test_CMD_02_reminder_button);
     RUN_TEST(test_CMD_03_push_acknowledges);
+    RUN_TEST(test_reminder_button_held_powers_off);
     RUN_TEST(test_debounce);
     RUN_TEST(test_REG_03_repeat_while_held);
     RUN_TEST(test_REG_03_new_press_starts_over);
     RUN_TEST(test_wake_press_counts_once);
+    RUN_TEST(test_power_on_press_is_ignored);
     RUN_TEST(test_two_buttons);
     return UNITY_END();
 }

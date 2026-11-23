@@ -41,6 +41,13 @@ typedef struct {
 void render_draw(render_image_t *image, const ktimer_view_t *view,
                  const render_options_t *options);
 
+/*
+ * Écran de message : deux lignes centrées, en grand puis en moyen (écran
+ * d'extinction, application de diagnostic). Une ligne peut être NULL.
+ */
+void render_message(render_image_t *image, const char *line1,
+                    const char *line2);
+
 /* Lecture d'un point (tests, pilotes). */
 bool render_pixel(const render_image_t *image, int x, int y);
 

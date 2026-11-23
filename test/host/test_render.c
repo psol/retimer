@@ -43,7 +43,7 @@ static void snapshot(const char *name)
     long d = helpers_snapshot(name, image.bytes, RENDER_WIDTH, RENDER_HEIGHT);
     if (d < 0) {
         TEST_FAIL_MESSAGE("Référence absente : lancer avec "
-                          "RETIMER_MAJ_REFERENCES=1");
+                          "RETIMER_UPDATE_REFERENCES=1");
     }
     TEST_ASSERT_EQUAL_MESSAGE(0, d, "L'écran diffère de sa référence");
 }
@@ -225,6 +225,13 @@ static void test_PLG_01_24_h_fit_on_screen(void)
     }
 }
 
+/* Écran d'extinction (bouton du rappel maintenu, CLAUDE.md). */
+static void test_power_off_screen(void)
+{
+    render_message(&image, "RETIMER", "ÉTEINT");
+    snapshot("13_power_off");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -242,5 +249,6 @@ int main(void)
     RUN_TEST(test_PLG_03_short_countdown_without_reminder);
     RUN_TEST(test_ERR_07_low_battery);
     RUN_TEST(test_PLG_01_24_h_fit_on_screen);
+    RUN_TEST(test_power_off_screen);
     return UNITY_END();
 }

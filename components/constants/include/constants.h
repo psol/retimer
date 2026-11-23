@@ -77,6 +77,12 @@ extern const size_t CST_ACCELERATION_COUNT;
 /* Anti-rebond des boutons. */
 #define CST_DEBOUNCE_MS 20
 
+/*
+ * Interface réduite du CoreInk (CLAUDE.md) : le bouton du rappel est aussi le
+ * bouton marche. Un appui maintenu aussi longtemps éteint l'appareil.
+ */
+#define POWER_OFF_HOLD_MS 3000
+
 /* ---- Intervalles de rappel (CLAUDE.md, interface réduite) --------------- */
 
 /* Liste parcourue par le bouton sous la molette ; 0 = arrêt (ACQ-02). */

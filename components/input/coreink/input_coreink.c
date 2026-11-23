@@ -11,7 +11,7 @@
 #define PIN_UP 37      /* molette haut */
 #define PIN_PUSH 38    /* appui sur la molette */
 #define PIN_DOWN 39    /* molette bas */
-#define PIN_REMINDER 5 /* bouton sous la molette (à vérifier) */
+#define PIN_REMINDER 27 /* bouton sous la molette, aussi bouton marche */
 
 void input_hw_init(void)
 {

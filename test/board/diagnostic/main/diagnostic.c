@@ -10,7 +10,10 @@
  *   4. LED : niveau bas, puis niveau haut
  *   5. boutons : affiche chaque changement de niveau pendant 30 s
  *   6. veille légère : réveil par minuterie ou par n'importe quel bouton
- *   7. veille profonde : réveil par molette haut, molette bas ou après 30 s
+ *   7. veille profonde : réveil par molette haut, bouton sous la molette ou
+ *      après 30 s
+ *
+ * L'écran affiche l'étape en attente d'un appui.
  */
 #include <stdio.h>
 #include <string.h>
@@ -26,11 +29,11 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "kitchen_timer.h"
-#include "render.h"
 #include "input_hw.h"
-#include "signals.h"
+#include "kitchen_timer.h"
 #include "power.h"
+#include "render.h"
+#include "signals.h"
 
 static const char *TAG = "diag";
 
@@ -40,9 +43,15 @@ static RTC_DATA_ATTR int64_t before_sleep_ms;
 
 static render_image_t image;
 
-static void wait_for_press(const char *step)
+/* Affiche l'étape à l'écran et attend un appui sur la molette. */
+static void wait_for_press(int number, const char *name, const char *label)
 {
-    ESP_LOGI(TAG, "---- %s : appuyer sur la molette pour lancer ----", step);
+    char title[16];
+    snprintf(title, sizeof title, "ÉTAPE %d", number);
+    render_message(&image, title, label);
+    eink_show(image.bytes, false);
+    ESP_LOGI(TAG, "---- %d. %s : appuyer sur la molette pour lancer ----",
+             number, name);
     while (gpio_get_level(38) == 1) {
         vTaskDelay(pdMS_TO_TICKS(20));
     }
@@ -66,7 +75,7 @@ static void draw_value(int64_t total_ms, int64_t reminder_ms)
 
 static void step_power(void)
 {
-    ESP_LOGI(TAG, "cause du démarrage : %d (1 = allumage, 8 = veille profonde)",
+    ESP_LOGI(TAG, "cause du démarrage : %d (1 = allumage, 5 = veille profonde)",
              (int)esp_reset_reason());
     ESP_LOGI(TAG, "cause du réveil : %d (2 = ext0, 3 = ext1, 4 = minuterie)",
              (int)esp_sleep_get_wakeup_cause());
@@ -79,7 +88,6 @@ static void step_power(void)
 
 static void step_display(void)
 {
-    eink_init(NULL);
     draw_value(12 * MINUTE_MS + 34 * SECOND_MS, 5 * MINUTE_MS);
     ESP_LOGI(TAG, "écran : rafraîchissement complet, attendu « 12:34 » et "
                   "« RAPPEL 05:00 »");
@@ -137,8 +145,9 @@ static void step_led(void)
 static void step_buttons(void)
 {
     const int pins[] = {37, 38, 39, 5, 27};
-    const char *names[] = {"molette haut ?", "appui molette ?", "molette bas ?",
-                          "bouton sous la molette ?", "bouton marche ?"};
+    const char *names[] = {"molette haut", "appui molette", "molette bas",
+                          "bouton au-dessus de l'écran",
+                          "bouton sous la molette (marche, rappel)"};
     int before[5];
     for (int i = 0; i < 5; i++) {
         gpio_set_direction(pins[i], GPIO_MODE_INPUT);
@@ -175,7 +184,8 @@ static void step_light_sleep(void)
 
 static void step_deep_sleep(void)
 {
-    ESP_LOGI(TAG, "veille profonde n° %lu : 30 s, ou molette haut ou bas. "
+    ESP_LOGI(TAG, "veille profonde n° %lu : 30 s, ou molette haut, ou bouton "
+                  "sous la molette. "
                   "Faire l'essai sur batterie, câble USB débranché, puis "
                   "rebrancher pour lire la suite.",
              (unsigned long)deep_sleep_count + 1);
@@ -196,7 +206,7 @@ void app_main(void)
 
     if (power_woke_from_deep_sleep()) {
         ESP_LOGI(TAG, "==== réveil de veille profonde n° %lu après %lld ms, "
-                      "bouton %lu (1 = haut, 4 = bas, 0 = minuterie) ====",
+                      "bouton %lu (1 = haut, 8 = sous la molette, 0 = minuterie) ====",
                  (unsigned long)deep_sleep_count,
                  (long long)(power_now_ms() - before_sleep_ms),
                  (unsigned long)power_wake_button());
@@ -204,19 +214,20 @@ void app_main(void)
         deep_sleep_count = 0;
         ESP_LOGI(TAG, "==== diagnostic Retimer ====");
     }
+    eink_init(NULL);
 
-    wait_for_press("1. alimentation");
+    wait_for_press(1, "alimentation", "ALIMENTATION");
     step_power();
-    wait_for_press("2. écran");
+    wait_for_press(2, "écran", "ÉCRAN");
     step_display();
-    wait_for_press("3. buzzer");
+    wait_for_press(3, "buzzer", "BUZZER");
     step_buzzer();
-    wait_for_press("4. LED");
+    wait_for_press(4, "LED", "LED");
     step_led();
-    wait_for_press("5. boutons");
+    wait_for_press(5, "boutons", "BOUTONS");
     step_buttons();
-    wait_for_press("6. veille légère");
+    wait_for_press(6, "veille légère", "VEILLE LÉGÈRE");
     step_light_sleep();
-    wait_for_press("7. veille profonde");
+    wait_for_press(7, "veille profonde", "VEILLE PROFONDE");
     step_deep_sleep();
 }

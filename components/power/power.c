@@ -24,7 +24,7 @@ static const char *TAG = "power";
 #define PIN_UP 37
 #define PIN_PUSH 38
 #define PIN_DOWN 39
-#define PIN_REMINDER 5
+#define PIN_REMINDER 27 /* bouton sous la molette, aussi bouton marche */
 #define BATTERY_CHANNEL ADC_CHANNEL_7 /* GPIO 35 */
 
 void power_init(void)
@@ -49,8 +49,8 @@ uint32_t power_wake_button(void)
     case ESP_SLEEP_WAKEUP_EXT0:
         return INPUT_MASK(BUTTON_UP);
     case ESP_SLEEP_WAKEUP_EXT1:
-        if (esp_sleep_get_ext1_wakeup_status() & (1ULL << PIN_DOWN)) {
-            return INPUT_MASK(BUTTON_DOWN);
+        if (esp_sleep_get_ext1_wakeup_status() & (1ULL << PIN_REMINDER)) {
+            return INPUT_MASK(BUTTON_REMINDER);
         }
         return 0;
     default:
@@ -98,10 +98,13 @@ void power_sleep(int64_t wakeup_ms, power_mode_t mode)
 
     /*
      * Veille profonde : deux commandes seulement (docs/coreink.md,
-     * section 4) : molette haut par ext0, molette bas par ext1.
+     * section 4) : molette haut par ext0, bouton du rappel par ext1
+     * (ETA-10). La molette bas ne réveille pas : en Veille, la globale est
+     * à zéro et ne peut pas descendre.
      */
     esp_sleep_enable_ext0_wakeup(PIN_UP, 0);
-    esp_sleep_enable_ext1_wakeup(1ULL << PIN_DOWN, ESP_EXT1_WAKEUP_ALL_LOW);
+    esp_sleep_enable_ext1_wakeup(1ULL << PIN_REMINDER,
+                                 ESP_EXT1_WAKEUP_ALL_LOW);
     ESP_LOGI(TAG, "veille profonde");
     esp_deep_sleep_start();
 }

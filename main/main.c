@@ -53,6 +53,22 @@ static render_image_t image;
 static bool low_battery = false;
 static int64_t last_battery_measure = INT64_MIN / 2;
 
+/*
+ * Bouton du rappel maintenu (c'est aussi le bouton marche, CLAUDE.md) :
+ * message à l'écran, puis extinction. Sur USB, la carte reste alimentée :
+ * on repart alors de la Veille, comme après une coupure (ERR-08).
+ */
+static void turn_off(void)
+{
+    render_message(&image, "RETIMER", "ÉTEINT");
+    eink_show(image.bytes, true);
+    eink_sleep();
+    power_off();
+    vTaskDelay(pdMS_TO_TICKS(1000));
+    ESP_LOGI(TAG, "toujours alimentée (USB) : retour en veille");
+    ktimer_init(&rtc.timer);
+}
+
 /* Applique un événement de saisie à la minuterie. */
 static uint32_t apply(const input_event_t *ev, int64_t now)
 {
@@ -82,6 +98,9 @@ static uint32_t apply(const input_event_t *ev, int64_t now)
     case EV_ACKNOWLEDGE:
         ESP_LOGI(TAG, "acquitter");
         return ktimer_acknowledge(m, now);
+    case EV_POWER_OFF:
+        turn_off();
+        return SIGNAL_NONE;
     }
     return SIGNAL_NONE;
 }
@@ -115,7 +134,16 @@ static void show_screen(int64_t now)
     ktimer_view(&rtc.timer, now, &view);
     render_options_t options = {.low_battery = low_battery};
     render_draw(&image, &view, &options);
-    eink_show(image.bytes, false);
+    /*
+     * Rafraîchissement complet à l'entrée et à la sortie d'une alerte
+     * inversée : en partiel, l'image précédente reste visible en blanc sur
+     * noir (vérification B5 du 23 novembre 2026).
+     */
+    static bool was_inverted = false;
+    bool inverted =
+        view.alert_inverted && (view.end_alert || view.reminder_alert);
+    eink_show(image.bytes, inverted != was_inverted);
+    was_inverted = inverted;
     rtc.displayed = image;
 
     /* CST-06 : éclat de la LED en complément d'une alerte. */
@@ -145,6 +173,10 @@ void app_main(void)
     signals_init();
     input_hw_init();
     input_init(&input);
+    if (!resumed) {
+        /* Le bouton marche, qui sert aussi au rappel, est encore tenu. */
+        input_ignore_until_release(&input, BUTTON_REMINDER);
+    }
     eink_init(resumed ? rtc.displayed.bytes : NULL);
 
     input_event_t events[8];
@@ -197,8 +229,9 @@ void app_main(void)
             continue;
         }
         /*
-         * Décompte, Terminé, Réglage : veille légère, pour que le bouton du
-         * rappel (GPIO 5) réveille aussi (docs/coreink.md, section 4).
+         * Décompte, Terminé, Réglage : veille légère, pour que toutes les
+         * commandes réveillent, molette bas et appui compris
+         * (docs/coreink.md, section 4).
          */
         power_sleep(wakeup, POWER_LIGHT_SLEEP);
     }

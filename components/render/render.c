@@ -417,6 +417,18 @@ static void finished_screen(render_image_t *im, const ktimer_view_t *view)
     text_centered(im, REMINDER_ZONE_Y + 20, "FIN", 5);
 }
 
+void render_message(render_image_t *im, const char *line1,
+                    const char *line2)
+{
+    memset(im->bytes, 0, sizeof im->bytes);
+    if (line1 != NULL) {
+        text_centered(im, 60, line1, 4);
+    }
+    if (line2 != NULL) {
+        text_centered(im, 120, line2, 2);
+    }
+}
+
 void render_draw(render_image_t *im, const ktimer_view_t *view,
                  const render_options_t *options)
 {

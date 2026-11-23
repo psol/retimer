@@ -3,7 +3,8 @@
  *
  * Correspondance des commandes (CLAUDE.md, « Interface réduite ») :
  * molette haut / bas → globale plus / moins, avec répétition au maintien ;
- * bouton sous la molette → rappel suivant ; appui sur la molette →
+ * bouton sous la molette → rappel suivant, et extinction s'il reste enfoncé
+ * POWER_OFF_HOLD_MS (c'est aussi le bouton marche) ; appui sur la molette →
  * acquitter.
  */
 #include "input.h"
@@ -73,13 +74,22 @@ size_t input_process(input_t *s, int64_t now, uint32_t pressed,
                 /* Appui : un événement tout de suite. */
                 b->repeat = 0;
                 n = emit(type_of((input_button_t)i), 0, out, n, max);
-                b->next_repeat_ms =
-                    repeated((input_button_t)i)
-                        ? now + CST_REPEAT_DELAY_MS
-                        : INT64_MAX;
+                if (repeated((input_button_t)i)) {
+                    b->next_repeat_ms = now + CST_REPEAT_DELAY_MS;
+                } else if (i == BUTTON_REMINDER) {
+                    b->next_repeat_ms = now + POWER_OFF_HOLD_MS;
+                } else {
+                    b->next_repeat_ms = INT64_MAX;
+                }
             } else {
                 b->next_repeat_ms = INT64_MAX;
             }
+        }
+
+        /* Bouton du rappel maintenu : extinction, une seule fois. */
+        if (i == BUTTON_REMINDER && b->stable && now >= b->next_repeat_ms) {
+            n = emit(EV_POWER_OFF, 0, out, n, max);
+            b->next_repeat_ms = INT64_MAX;
         }
 
         /* Répétition au maintien (remplace REG-03, rotation continue). */
@@ -114,6 +124,18 @@ size_t input_wake_press(input_t *s, input_button_t button,
     b->repeat = 0;
     b->next_repeat_ms = INT64_MAX;
     return emit(type_of(button), 0, out, 0, max);
+}
+
+void input_ignore_until_release(input_t *s, input_button_t button)
+{
+    if (button >= BUTTON_COUNT) {
+        return;
+    }
+    input_button_state_t *b = &s->buttons[button];
+    b->raw = true;
+    b->stable = true;
+    b->repeat = 0;
+    b->next_repeat_ms = INT64_MAX;
 }
 
 bool input_busy(const input_t *s)
