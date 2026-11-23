@@ -1,2 +1,4 @@
-# En-têtes seulement : premier jet du pilote à l'étape 3.
-idf_component_register(INCLUDE_DIRS "include")
+idf_component_register(SRCS "eink_display.c"
+                       INCLUDE_DIRS "include"
+                       PRIV_REQUIRES constants esp_driver_gpio esp_driver_spi
+                                     esp_timer)

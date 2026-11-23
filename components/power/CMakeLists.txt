@@ -1,2 +1,3 @@
-# En-têtes seulement : premier jet du pilote à l'étape 3.
-idf_component_register(INCLUDE_DIRS "include")
+idf_component_register(SRCS "power.c"
+                       INCLUDE_DIRS "include"
+                       PRIV_REQUIRES input esp_driver_gpio esp_adc esp_hw_support)
