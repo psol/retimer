@@ -6,10 +6,12 @@
  */
 #include "power.h"
 
+#include <stdio.h>
 #include <sys/time.h>
 
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
+#include "driver/uart.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 #include "esp_adc/adc_oneshot.h"
@@ -49,10 +51,14 @@ uint32_t power_wake_button(void)
     case ESP_SLEEP_WAKEUP_EXT0:
         return INPUT_MASK(BUTTON_UP);
     case ESP_SLEEP_WAKEUP_EXT1:
-        if (esp_sleep_get_ext1_wakeup_status() & (1ULL << PIN_REMINDER)) {
-            return INPUT_MASK(BUTTON_REMINDER);
-        }
-        return 0;
+        /*
+         * Seul le bouton sous la molette est surveillé par ext1. Soirée 2
+         * (E5) : réveil par ext1 sans appui reconnu ; le registre d'état
+         * peut rester à zéro en mode « toutes à 0 ». On ne s'y fie donc pas.
+         */
+        ESP_LOGI(TAG, "réveil ext1, état 0x%llx",
+                 (unsigned long long)esp_sleep_get_ext1_wakeup_status());
+        return INPUT_MASK(BUTTON_REMINDER);
     default:
         return 0;
     }
@@ -106,6 +112,9 @@ void power_sleep(int64_t wakeup_ms, power_mode_t mode)
     esp_sleep_enable_ext1_wakeup(1ULL << PIN_REMINDER,
                                  ESP_EXT1_WAKEUP_ALL_LOW);
     ESP_LOGI(TAG, "veille profonde");
+    /* Laisser partir les dernières lignes du journal (soirée 2). */
+    fflush(stdout);
+    uart_wait_tx_idle_polling(CONFIG_ESP_CONSOLE_UART_NUM);
     esp_deep_sleep_start();
 }
 
