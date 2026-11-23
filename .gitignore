@@ -1,7 +1,12 @@
+# macOS
 .DS_Store
-boot_out.txt
-lib
-.fseventsd
-.metadata_never_index
-.Trashes
 ._*
+
+# ESP-IDF
+build/
+sdkconfig.old
+managed_components/
+dependencies.lock
+
+# Tests sur l'hôte
+test/host/build/
