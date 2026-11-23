@@ -185,28 +185,32 @@ Règles :
 - chaque dépendance au matériel passe par une interface courte (en-tête C) ;
   un portage ne réécrit que l'implémentation ;
 - la logique métier se compile et se teste aussi sur le Mac (tests sur l'hôte),
-  sans carte.
+  sans carte ;
+- le code est en anglais (noms de fichiers, de composants, de fonctions, de
+  types, de variables, de constantes), les commentaires et la documentation
+  restent en français. Les identifiants d'exigences restent tels quels, y
+  compris dans les noms des tests (`test_ECH_05_ETA_16_reminder_restarts_from_ack`).
 
 Découpage prévu (composants ESP-IDF sous `components/`) :
 
 | Composant | Rôle | Dépend du matériel |
 |---|---|---|
-| `minuterie` | États ETA, échéances ECH, acquittements ACQ, modifications MOD. Reçoit des événements et l'heure, rend l'état à afficher et la date du prochain réveil nécessaire. | Non |
-| `reglage` | Pas de réglage selon la valeur de départ et l'accélération (REG, CST-03, CST-04), liste des intervalles de rappel. | Non |
-| `constantes` | Tables de constantes (GEN-06, CST). | Non |
-| `rendu` | Construit l'image à afficher (temps restants, alertes, clignotement, affichage réduit) dans un tampon, sans connaître l'écran. | Non |
-| `saisie` | Traduit la molette et les boutons en événements abstraits (globale +/-, rappel suivant, acquitter) : anti-rebond, répétition accélérée. | Oui (CoreInk) |
-| `ecran_eink` | Pilote de l'écran e-ink : envoi du tampon, mise à jour partielle, rafraîchissement complet périodique contre les traces. | Oui (CoreInk) |
-| `signaux` | Motifs de sonnerie (buzzer) et d'alerte (LED, écran). | Oui (CoreInk) |
-| `veille` | Mise en veille profonde de l'ESP32, réveil par minuterie et par broche, conservation de l'état en mémoire RTC. | Oui (ESP32) |
+| `kitchen_timer` (minuterie) | États ETA, échéances ECH, acquittements ACQ, modifications MOD. Reçoit des événements et l'heure, rend l'état à afficher et la date du prochain réveil nécessaire. | Non |
+| `adjust` (réglage) | Pas de réglage selon la valeur de départ et l'accélération (REG, CST-03, CST-04), liste des intervalles de rappel. | Non |
+| `constants` | Tables de constantes (GEN-06, CST). | Non |
+| `render` (rendu) | Construit l'image à afficher (temps restants, alertes, clignotement, affichage réduit) dans un tampon, sans connaître l'écran. | Non |
+| `input` (saisie) | Traduit la molette et les boutons en événements abstraits (globale +/-, rappel suivant, acquitter) : anti-rebond, répétition accélérée. | Oui (CoreInk) |
+| `eink_display` | Pilote de l'écran e-ink : envoi du tampon, mise à jour partielle, rafraîchissement complet périodique contre les traces. | Oui (CoreInk) |
+| `signals` (signaux) | Motifs de sonnerie (buzzer) et d'alerte (LED, écran). | Oui (CoreInk) |
+| `power` (veille, alimentation) | Mise en veille profonde de l'ESP32, réveil par minuterie et par broche, conservation de l'état en mémoire RTC. | Oui (ESP32) |
 | `main` | Assemble le tout : réveil, lecture des événements, logique, rendu, programmation du prochain réveil, mise en veille. | Oui |
 
 Points de conception :
 
 - en veille profonde, l'ESP32 perd sa RAM sauf la mémoire RTC : l'état de
-  `minuterie` doit tenir dans une structure simple, copiable en mémoire RTC ;
-- le prochain réveil est calculé par `minuterie` (échéance, rafraîchissement
-  de l'affichage, motif d'alerte) et appliqué par `veille` (GEN-05) ;
+  `kitchen_timer` doit tenir dans une structure simple, copiable en mémoire RTC ;
+- le prochain réveil est calculé par `kitchen_timer` (échéance, rafraîchissement
+  de l'affichage, motif d'alerte) et appliqué par `power` (GEN-05) ;
 - on commence par la veille profonde de l'ESP32 (réveil par minuterie et par
   broche). L'extinction complète avec réveil par l'horloge BM8563 consomme
   moins, mais les boutons ne réveilleraient peut-être plus l'appareil : à
