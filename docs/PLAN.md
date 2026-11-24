@@ -382,6 +382,24 @@ traiter dans une étape suivante, après les essais :
   1 minute, effacement du drapeau, réveil de la veille légère par GPIO 19,
   courant dans chaque mode, dérive de l'horloge lente sur 30 min à deux
   températures.
+- **Extinction automatique en Veille** (idée de Benoît, 24 novembre 2026, à
+  étudier, aucun développement maintenant) : une minuterie de cuisine sert une
+  fois par jour, voire une fois tous les deux jours. Après un délai
+  d'inactivité en Veille, on affiche « RETIMER ÉTEINT » avec le bouton qui
+  rallume (l'écran garde le message sans alimentation) et on coupe
+  l'alimentation (GPIO 12 à 0), au lieu de la veille profonde. Estimation
+  non mesurée (`docs/coreink.md`, section 6) : veille profonde ~230 µA, soit
+  ~5,5 mAh par jour ; éteinte, quelques µA, soit ~0,1 mAh par jour ; pour une
+  heure de décompte tous les deux jours, ~65 jours d'autonomie contre
+  plusieurs mois (limite : l'auto-décharge de la batterie, état de la batterie
+  de 2023 inconnu). À étudier : délai d'inactivité ; seul le bouton marche
+  rallume (la molette non) ; rien à conserver en Veille ; démarrage à froid
+  plus long qu'un réveil de veille profonde ; rafraîchir le message toutes les
+  24 h par une alarme du BM8563 (recommandation de la fiche du D67, voir
+  ci-dessous) ; effacer le drapeau d'alarme avant d'éteindre ; vérifier sur
+  batterie que l'extinction tient (essais F1 à F5, `docs/verifications-carte.md`).
+  Décision d'ergonomie à poser à Benoît : ne rien inscrire dans SPEC.md sans son
+  accord (ERR-08 dit aujourd'hui que rien n'est conservé après une coupure).
 - **Rafraîchissement de l'écran** (fiche du GDEY0154D67, valable par hypothèse
   pour le GDEW0154M09) : rafraîchir au moins toutes les 24 h, et un complet
   après 5 partiels consécutifs. À comparer à `CST_DISPLAY_PARTIALS_BEFORE_FULL`
