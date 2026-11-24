@@ -330,10 +330,21 @@ traiter dans une étape suivante, après les essais :
      de développement ;
   4. fréquence du CPU à 80 MHz au lieu de 160 MHz ;
   5. couper la sortie 32 kHz de l'horloge BM8563 par I2C au démarrage.
+  Pour le point 1 : l'attente est dans `wait_ready()` (eink_display.c), une
+  boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
+  (`CONFIG_PM_ENABLE=n`), le cœur s'arrête entre deux tics mais la PLL et les
+  périphériques restent alimentés. Remplacer par un réveil sur BUSY à 1 et
+  `esp_light_sleep_start()`.
   Puis mesurer l'autonomie sur batterie pour chiffrer le gain. Déjà en place :
   WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
   d'affichage avec réveil par les boutons, veille profonde en Veille, écran
   jamais redessiné à l'identique.
+- **Format de l'image** (remarque de Benoît, 24 novembre 2026) : `render`
+  dessine en « 1 = noir » et le pilote recopie chaque ligne en l'inversant
+  pour le contrôleur. Passer à `render` une option de rendu (polarité des
+  points, négatif) pour que le pilote envoie le tampon tel quel ; le négatif
+  du rafraîchissement complet serait un second rendu. `render` reste
+  indépendant du contrôleur : c'est le pilote qui déclare sa polarité.
 - **Délai de démarrage** (ajustement, CST) : 3 s, jugé court pour régler
   plusieurs minutes.
 - **Premier appui perdu au réveil** (défaut) : depuis la Veille, il faut
