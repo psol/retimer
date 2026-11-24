@@ -334,11 +334,16 @@ traiter dans une étape suivante, après les essais :
   boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
   (`CONFIG_PM_ENABLE=n`), le cœur s'arrête entre deux tics mais la PLL et les
   périphériques restent alimentés. Remplacer par un réveil sur BUSY à 1 et
-  `esp_light_sleep_start()`. Conception (discutée avec Benoît) : `power`
-  offre un service unique `power_wait_until(broche, niveau, délai max)` qui
-  met en veille légère ; le pilote d'écran reçoit une fonction d'attente à
-  l'initialisation (`eink_config_t`) et ne connaît pas `power` ; `main` fait
-  le branchement. Même mécanisme pour les notes du buzzer.
+  `esp_light_sleep_start()`.
+  **Implémentation obligatoire** (décision de Benoît, 24 novembre 2026) :
+  toute mise en veille passe par `power`, qui reste le seul module à appeler
+  les fonctions de veille d'ESP-IDF. `power` offre un service unique
+  `power_wait_until(broche, niveau, délai max)` qui met en veille légère
+  jusqu'au changement de la broche ou au délai. Le pilote d'écran ne connaît
+  pas `power` : il reçoit une fonction d'attente à l'initialisation
+  (`eink_config_t`), qu'il appelle à la place de sa boucle `vTaskDelay`.
+  `main` fait le branchement. Même mécanisme pour les notes du buzzer
+  (`signals`).
   Puis mesurer l'autonomie sur batterie pour chiffrer le gain. Déjà en place :
   WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
   d'affichage avec réveil par les boutons, veille profonde en Veille, écran
