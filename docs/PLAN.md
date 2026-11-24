@@ -373,7 +373,8 @@ traiter dans une étape suivante, après les essais :
   - **C** : extinction complète, l'alarme du BM8563 rallume la carte par
     PWR_TRIG. Réserves : effacer le drapeau d'alarme avant d'éteindre (sinon la
     carte ne s'éteint pas) ; seuls le bouton marche et l'alarme rallument (pas
-    la molette) ; état de la minuterie à garder dans le BM8563 ; démarrage à
+    la molette) ; état de la minuterie à garder en flash (la BM8563 n'a pas de
+    mémoire libre) ; démarrage à
     froid plus long (coûteux pour des réveils chaque minute, ~0,7 mA de moyenne
     estimés) ; en revanche ~230 µA de la veille profonde tombent à quelques µA
     (pont de batterie coupé avec Q4), donc intéressant pour des réveils rares.

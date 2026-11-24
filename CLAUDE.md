@@ -243,7 +243,8 @@ Points de conception :
   qui rallume la carte. Mais seuls le bouton marche et l'alarme rallument
   (la molette ne passe pas par PWR_TRIG), le drapeau d'alarme doit être
   effacé avant l'extinction (sinon la carte ne s'éteint pas), l'état de la
-  minuterie doit être gardé dans le BM8563. Le gain d'énergie est important
+  minuterie doit être gardé ailleurs que dans la mémoire RTC de l'ESP32 (flash,
+  ou date de fin dans l'alarme du BM8563, qui n'a pas de mémoire libre). Le gain d'énergie est important
   (le pont de batterie, ~170 µA, est coupé avec Q4 ; reste quelques µA) mais
   le démarrage à froid coûte cher pour des réveils fréquents : à tester et à
   mesurer avant de l'adopter. La broche CLKOUT de la BM8563 n'est pas connectée. Voir

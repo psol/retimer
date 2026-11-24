@@ -342,8 +342,14 @@ Le mode « CLKOUT + interruption » n'existe pas sur cette carte.
   PWR_TRIG bas et la carte **ne s'éteint pas** ;
 - **seuls le bouton marche (GPIO 27) et l'alarme rallument** : la molette
   (GPIO 37, 38, 39) ne passe pas par PWR_TRIG ;
-- **l'état de la minuterie est perdu** (mémoire RTC de l'ESP32 coupée) :
-  l'échéance devrait être gardée dans la BM8563 (quelques octets seulement) ;
+- **l'état de la minuterie est perdu** (mémoire RTC de l'ESP32 coupée) : il
+  faut le garder ailleurs. La BM8563 n'est **pas** une mémoire : dans la
+  famille PCF8563, ses 16 registres ne contiennent que l'heure, l'alarme, la
+  minuterie et le contrôle, sans octet libre (à confirmer dans la fiche, non
+  lue) ; ses registres sont volatils (conservés tant que SYS_BAT est présent).
+  Options : la **mémoire flash de l'ESP32** (NVS, non volatile, quelques
+  écritures par cuisson, usure sans souci), ou la date de fin placée dans
+  l'alarme de la BM8563 (résolution à la minute) ;
 - **démarrage à froid** plus long (initialisation de l'écran), à mesurer ;
 - le gain d'énergie est important : le pont de batterie est coupé avec Q4, il
   ne reste que la BM8563 et les fuites du chargeur (voir 6).
