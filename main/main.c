@@ -90,13 +90,24 @@ static uint32_t apply(const input_event_t *ev, int64_t now)
 
     /*
      * Affichage réduit : le premier cran (molette ou bouton du rappel) ne
-     * fait que montrer les secondes ; les suivants règlent (soirée 2).
+     * fait que montrer les secondes ; les crans suivants règlent (soirée 2).
+     * Les répétitions de ce même appui, si la molette reste tenue, ne règlent
+     * pas non plus (soirée 2, E18 : 44:02 devenait 44:00).
      */
+    static bool revealing = false;
+    static input_type_t revealed_type;
+    if (ev->repeat == 0) {
+        revealing = false;
+    } else if (revealing && ev->type == revealed_type) {
+        return SIGNAL_NONE;
+    }
     if (view.reduced && ev->repeat == 0 &&
         (ev->type == EV_TOTAL_PLUS || ev->type == EV_TOTAL_MINUS ||
          ev->type == EV_NEXT_REMINDER)) {
         ESP_LOGI(TAG, "affichage complet, sans réglage");
         ktimer_reveal(m, now);
+        revealing = true;
+        revealed_type = ev->type;
         return SIGNAL_NONE;
     }
 
