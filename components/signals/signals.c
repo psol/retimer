@@ -2,7 +2,8 @@
  * Sonnerie sur le buzzer (GPIO 2, MLI) et LED (GPIO 10) du CoreInk.
  * Voir signals.h et docs/coreink.md, sections 1 et 5.
  *
- * PREMIER JET, ÉCRIT SANS LA CARTE : à vérifier (docs/verifications-carte.md).
+ * Vérifié sur la carte les 23 et 24 novembre 2026
+ * (docs/verifications-carte.md, soirées 1 et 2).
  */
 #include "signals.h"
 

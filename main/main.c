@@ -6,8 +6,8 @@
  * la minuterie, sonner, dessiner, afficher, puis dormir jusqu'au prochain
  * réveil (GEN-05).
  *
- * PREMIER JET, ÉCRIT SANS LA CARTE : compilé, pas encore vérifié
- * (docs/verifications-carte.md).
+ * Vérifié sur la carte les 23 et 24 novembre 2026
+ * (docs/verifications-carte.md, soirées 1 et 2).
  */
 #include <stdio.h>
 #include <string.h>

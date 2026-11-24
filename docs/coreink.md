@@ -1,7 +1,8 @@
 # Fiche technique : M5Stack CoreInk
 
 Fiche rédigée le 23 novembre 2026, sans la carte, à partir de la documentation
-de M5Stack et du code de ses bibliothèques. Elle sert d'entrée aux pilotes
+de M5Stack et du code de ses bibliothèques, puis corrigée d'après les
+vérifications sur la carte des 23 et 24 novembre 2026 (soirées 1 et 2). Elle sert d'entrée aux pilotes
 (`input`, `eink_display`, `signals`, `power`). Chaque information porte son
 degré de certitude :
 
@@ -26,7 +27,7 @@ Sources en fin de fiche.
 | 27 | Bouton marche (« PWR »), **sous la molette** | entrée, actif bas | carte (23/11/2026) | GPIO RTC. Le même bouton allume la carte par le circuit d'alimentation (schéma : S1, D5, D6). Retimer s'en sert aussi pour le rappel (CLAUDE.md). |
 | 12 | Maintien de l'alimentation (« HOLD ») | sortie | doc, code | À mettre à 1 dès le démarrage, sinon la carte s'éteint quand on relâche le bouton marche. À 0 : extinction complète (sur batterie). Broche de configuration (MTDI) de l'ESP32 : à vérifier qu'elle ne gêne pas le réveil. |
 | 2 | Buzzer | sortie MLI | doc, code | Piloté par un transistor S8050 (Q1, schéma). M5Stack le commande par une fréquence (LEDC), donc buzzer **passif** : à vérifier. |
-| 10 | LED verte | sortie | doc, code | Polarité non documentée : à vérifier. Emplacement sur le boîtier peu visible (CLAUDE.md). |
+| 10 | LED verte | sortie | doc, code | Active à l'état bas (vérifié, B7). Emplacement sur le boîtier peu visible (CLAUDE.md). |
 | 35 | Mesure de la batterie | entrée analogique (ADC1, canal 7) | code, schéma | Pont diviseur 20 kΩ / 5,1 kΩ (R41, R42) : V_bat = V_adc × 25,1 / 5,1. |
 | 19 | Interruption de l'horloge BM8563 | entrée, actif bas | code | M5Unified l'utilise pour le réveil par l'alarme. Pas un GPIO RTC. Le schéma suggère que l'interruption agit aussi sur l'allumage (réseau `PWR_TRIG`) : à vérifier. |
 | 21, 22 | I²C interne (SDA, SCL) : horloge BM8563, adresse 0x51 | — | doc, code | |

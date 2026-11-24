@@ -2,7 +2,8 @@
  * Pilote de l'écran GDEW0154M09 (contrôleur Fitipower JD79653A) du CoreInk.
  * Voir eink_display.h et docs/coreink.md, section 2.
  *
- * PREMIER JET, ÉCRIT SANS LA CARTE : à vérifier (docs/verifications-carte.md).
+ * Vérifié sur la carte les 23 et 24 novembre 2026
+ * (docs/verifications-carte.md, soirées 1 et 2).
  *
  * La séquence d'initialisation, les formes d'onde de mise à jour rapide et
  * l'ordre des commandes viennent de Panel_GDEW0154M09 dans M5GFX
@@ -230,7 +231,7 @@ static void init_controller(void)
     init_bus();
     reset();
     run_sequence(INIT_SEQUENCE);
-    /* Polarité des données : 0xD7 d'après M5GFX (à vérifier). */
+    /* Polarité des données : 0xD7 d'après M5GFX (vérifié, B3). */
     wait_ready();
     command(CMD_VCOM_INTERVAL);
     data(0xD7);

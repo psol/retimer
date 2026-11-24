@@ -2,7 +2,8 @@
  * Alimentation et veille de l'ESP32 du CoreInk. Voir power.h et
  * docs/coreink.md, sections 3 et 4.
  *
- * PREMIER JET, ÉCRIT SANS LA CARTE : à vérifier (docs/verifications-carte.md).
+ * Vérifié sur la carte les 23 et 24 novembre 2026
+ * (docs/verifications-carte.md, soirées 1 et 2).
  */
 #include "power.h"
 
