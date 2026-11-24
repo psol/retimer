@@ -117,9 +117,22 @@ static void test_CMD_05_setting_total_and_reminder(void)
     snapshot("02_setting");
 }
 
+/* DEM-02 : libellé « AVANT DÉPART » pendant le délai de démarrage. */
+static void test_DEM_02_starting_indicator(void)
+{
+    ktimer_set_reminder(&m, T0, M(5));
+    ktimer_set_total(&m, T0, M(20));
+    draw(T0 + S(1));
+    TEST_ASSERT_EQUAL(STATE_STARTING, view.state);
+    snapshot("03_starting");
+}
+
 /* DEM-02 : phase éteinte du clignotement : les valeurs disparaissent. */
 static void test_DEM_02_blink_off_phase(void)
 {
+    if (CST_BLINK_PERIOD_MS <= 0) {
+        TEST_IGNORE_MESSAGE("clignotement désactivé dans les constantes");
+    }
     ktimer_set_reminder(&m, T0, M(5));
     ktimer_set_total(&m, T0, M(20));
     draw(T0 + CST_BLINK_PERIOD_MS / 2);
@@ -241,6 +254,7 @@ int main(void)
     RUN_TEST(test_MAT_04_reduced_format);
     RUN_TEST(test_ETA_08_MAT_12_idle_screen);
     RUN_TEST(test_CMD_05_setting_total_and_reminder);
+    RUN_TEST(test_DEM_02_starting_indicator);
     RUN_TEST(test_DEM_02_blink_off_phase);
     RUN_TEST(test_MAT_04_reduced_countdown);
     RUN_TEST(test_CMD_05_full_countdown);

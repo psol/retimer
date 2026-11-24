@@ -126,6 +126,10 @@ Ce qui reste conforme à SPEC.md :
   REG-03 pour le rappel) ; pour diminuer, il faut faire le tour de la liste ;
 - l'accélération du réglage dépend de la durée du maintien de la molette, pas
   d'une rotation continue ;
+- pas de clignotement pendant le délai de démarrage (DEM-02) : l'e-ink est
+  trop lent pour qu'il se voie (soirée 2), et chaque rafraîchissement
+  consomme. Le démarrage imminent est signalé par le libellé fixe « AVANT
+  DÉPART » à la place de « TOTAL » (`CST_BLINK_PERIOD_MS` à 0) ;
 - les alertes ne reposent pas sur la seule LED (voir « Alertes à l'écran » ci-dessous) ;
 - pas de capteur « mains sales » dans cette étape (CMD-04 est souhaitable) ; un
   capteur pourra être branché plus tard sur le port Grove.

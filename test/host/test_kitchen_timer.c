@@ -110,6 +110,15 @@ static void test_DEM_03_action_restarts_delay(void)
 static void test_DEM_02_blink(void)
 {
     ktimer_set_total(&m, T0, M(1));
+    if (CST_BLINK_PERIOD_MS <= 0) {
+        /* Sans clignotement : aucun réveil avant la fin du délai. */
+        look(T0 + S(1));
+        TEST_ASSERT_FALSE(view.blink_hidden);
+        TEST_ASSERT_EQUAL(STATE_STARTING, view.state);
+        TEST_ASSERT_EQUAL_INT64(T0 + CST_START_DELAY_MS,
+                                ktimer_next_wakeup(&m, T0));
+        return;
+    }
     look(T0);
     TEST_ASSERT_FALSE(view.blink_hidden);
     look(T0 + CST_BLINK_PERIOD_MS / 2);

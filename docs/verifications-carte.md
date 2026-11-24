@@ -109,6 +109,8 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E17 | Firmware : pendant un décompte en « 04:-- », donner un cran de molette. | Les secondes réapparaissent tout de suite avec la nouvelle valeur, pendant 5 s, puis retour à « mm:-- ». Rappel : une fois le décompte parti, un cran modifie le temps sans relancer le délai de 3 s (MOD-01). | |
 | E18 | Firmware : décompte de 45 min. Regarder au départ, à 44:30, puis donner un cran de molette, puis un deuxième. | Complet pendant 15 s, puis « 44:-- ». Le premier cran montre les secondes sans rien changer ; le deuxième règle. | |
 | E19 | Firmware : décompte de 25 min. | Toujours en affichage complet (réduit seulement au-delà de 30 min). | |
+| E20 | Firmware, en Veille, **USB débranché** : attendre 1 min, puis molette haut. Recommencer avec le bouton sous la molette. | Molette haut : réglage « 00:05 ». Bouton : « RAPPEL 01:00 ». Pas de redémarrage à froid (correction du maintien du GPIO 12 au réveil). | |
+| E21 | Firmware : régler une valeur. | « AVANT DÉPART » remplace « TOTAL » pendant le délai de 3 s, sans clignotement ; « TOTAL » revient au départ du décompte. | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
 ## Ce que les résultats changent

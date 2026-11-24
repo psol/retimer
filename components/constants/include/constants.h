@@ -133,8 +133,14 @@ extern const size_t CST_REMINDER_INTERVAL_COUNT;
  */
 #define CST_FULL_DISPLAY_AT_START_MS (15 * SECOND_MS)
 
-/* DEM-02 : période du clignotement de démarrage imminent (allumé + éteint). */
-#define CST_BLINK_PERIOD_MS (1 * SECOND_MS)
+/*
+ * DEM-02 : période du clignotement de démarrage imminent (allumé + éteint).
+ * 0 : pas de clignotement. Sur le CoreInk, l'écran e-ink est trop lent pour
+ * que le clignotement se voie (soirée 2) : des rafraîchissements qui
+ * consomment sans se voir. Le démarrage imminent est signalé par le libellé
+ * fixe « AVANT DÉPART » (CLAUDE.md, « Interface réduite »).
+ */
+#define CST_BLINK_PERIOD_MS 0
 
 /*
  * Rafraîchissement complet de l'écran e-ink contre les traces : au plus tard

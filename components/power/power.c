@@ -31,10 +31,25 @@ static const char *TAG = "power";
 
 void power_init(void)
 {
-    /* Après une veille profonde, la broche est figée : on la libère. */
-    gpio_hold_dis(PIN_HOLD);
-    gpio_set_direction(PIN_HOLD, GPIO_MODE_OUTPUT);
+    /*
+     * Après une veille profonde, la broche est figée à 1, mais ses registres
+     * sont revenus à l'état de démarrage (entrée). La libérer d'abord la
+     * laissait tomber à 0 et coupait l'alimentation sur batterie : au réveil
+     * par le bouton sous la molette, la carte redémarrait à froid (soirée 2,
+     * B13). On prépare donc la sortie à 1 tant qu'elle est figée, puis on la
+     * libère.
+     */
+    gpio_config_t hold = {
+        .pin_bit_mask = 1ULL << PIN_HOLD,
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
     gpio_set_level(PIN_HOLD, 1);
+    gpio_config(&hold);
+    gpio_set_level(PIN_HOLD, 1);
+    gpio_hold_dis(PIN_HOLD);
     /* On la fige à 1 pour que la veille profonde ne coupe pas l'alimentation. */
     gpio_hold_en(PIN_HOLD);
     gpio_deep_sleep_hold_en();

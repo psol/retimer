@@ -154,7 +154,11 @@ un programme ULP qui surveille la molette pendant la veille profonde.
 
 Le GPIO 12 doit rester à 1 pendant la veille profonde, sinon la carte s'éteint
 (sur batterie). Il faut donc le figer avec `gpio_hold_en()` et
-`gpio_deep_sleep_hold_en()`. À vérifier le soir, sur batterie et non sur USB.
+`gpio_deep_sleep_hold_en()`. Au réveil, il faut configurer la broche en sortie
+à 1 **avant** de la libérer avec `gpio_hold_dis()` : ses registres sont revenus
+à l'état de démarrage, et la libérer d'abord coupe l'alimentation sur
+batterie (soirée 2 : au réveil par le bouton sous la molette, la carte
+redémarrait à froid ; sur USB, rien ne se voyait).
 
 ### Exactitude du temps
 

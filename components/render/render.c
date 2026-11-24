@@ -341,7 +341,9 @@ static void battery_indicator(render_image_t *im)
 static void total_zone(render_image_t *im, const ktimer_view_t *view,
                        bool mask)
 {
-    text(im, MARGIN, MARGIN + 2, "TOTAL", 2);
+    /* DEM-02 : libellé fixe pendant le délai de démarrage. */
+    text(im, MARGIN, MARGIN + 2,
+         view->state == STATE_STARTING ? "AVANT DÉPART" : "TOTAL", 2);
     if (mask) {
         return; /* DEM-02 : phase éteinte du clignotement */
     }
