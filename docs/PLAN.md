@@ -318,6 +318,22 @@ traiter dans une étape suivante, après les essais :
   jeux de valeurs choisis au bouton au-dessus de l'écran ou par la console
   série, avec un journal de chaque essai. Puis une soirée dédiée pour choisir
   les valeurs.
+- **Consommation** (demande de Benoît, 24 novembre 2026), par ordre de gain
+  estimé, non mesuré :
+  1. veille légère de l'ESP32 pendant que l'écran se met à jour (environ
+     330 ms par mise à jour, aujourd'hui passées éveillé à 160 MHz à
+     attendre la broche BUSY) ;
+  2. éteindre le contrôleur de l'écran après chaque mise à jour pendant le
+     décompte (il n'est éteint qu'avant la veille profonde) ;
+  3. journaux série coupés dans la version d'essai (y compris ceux du
+     démarrage à chaque réveil de veille profonde), gardés dans une version
+     de développement ;
+  4. fréquence du CPU à 80 MHz au lieu de 160 MHz ;
+  5. couper la sortie 32 kHz de l'horloge BM8563 par I2C au démarrage.
+  Puis mesurer l'autonomie sur batterie pour chiffrer le gain. Déjà en place :
+  WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
+  d'affichage avec réveil par les boutons, veille profonde en Veille, écran
+  jamais redessiné à l'identique.
 - **Délai de démarrage** (ajustement, CST) : 3 s, jugé court pour régler
   plusieurs minutes.
 - **Premier appui perdu au réveil** (défaut) : depuis la Veille, il faut
