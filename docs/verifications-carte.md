@@ -113,6 +113,24 @@ Flasher de nouveau le diagnostic, puis le firmware.
 | E21 | Firmware : régler une valeur. | « AVANT DÉPART » remplace « TOTAL » pendant le délai de 3 s, sans clignotement ; « TOTAL » revient au départ du décompte. | |
 | E8 | Bloc C de la soirée 1 (C1 à C9), avec le bouton sous la molette pour le rappel. | Voir C1 à C9. | |
 
+## Soirée suivante : alimentation et horloge BM8563 (propositions, à valider par Benoît)
+
+Issues de la lecture du schéma du 24 novembre 2026 (`coreink.md`, sections 3,
+4 et 6). Aucune n'est faite. Elles servent à décider des options A, B et C de
+PLAN.md, section 6.3. Un montage de mesure du courant sur la batterie est
+nécessaire pour F5 (multimètre en série, ou sonde de courant).
+
+| # | Faire | Attendu / à noter | Résultat |
+|---|---|---|---|
+| F1 | Lire l'heure et le drapeau d'alarme du BM8563 par I²C (adresse 0x51), programmer une alarme à 1 minute, **effacer le drapeau**, puis éteindre par GPIO 12 à 0. | La carte se rallume-t-elle à la minute ? Durée du redémarrage à froid ? | |
+| F2 | Comme F1, **sans effacer le drapeau** avant l'extinction. | Déduction du schéma : INT maintient PWR_TRIG bas et la carte ne s'éteint pas. Confirmé ou non ? | |
+| F3 | Carte éteinte complètement, tourner la molette haut, puis bas. | Pas de réveil attendu : seuls le bouton marche et l'alarme rallument. | |
+| F4 | Alarme ou minuterie du BM8563, ESP32 en veille légère, écoute de GPIO 19. | Réveil à l'échéance ? Durée mesurée. En veille profonde, pas de réveil attendu (GPIO 19 n'est pas RTC). | |
+| F5 | Mesurer le courant sur batterie : veille profonde, veille légère, décompte actif, extinction complète avec alarme programmée. | Tableau en µA. Comparer à ~230 µA (veille profonde) et ~170 µA (extinction) calculés ; vérifier le pont de batterie et le courant de repos des convertisseurs. | |
+| F6 | Mesurer la dérive de l'horloge lente 8MD256 sur 30 minutes, à température ambiante puis dans un endroit plus chaud (hors UV, jamais près d'une flamme). | Écart en secondes, par température. | |
+| F7 | Rôle de la branche USB_5V → D19 → R51 : brancher l'USB carte éteinte. | La carte s'allume-t-elle seule ? | |
+| F8 | Compter les rafraîchissements de l'écran (complets et partiels) pendant plusieurs jours, et photographier le contraste (blanc, puis noir) avant et après plusieurs heures de décompte. | Compteur affiché au diagnostic ; traces ou perte de contraste. | |
+
 ## Ce que les résultats changent
 
 | Si… | Alors… |
