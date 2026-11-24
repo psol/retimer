@@ -168,8 +168,12 @@ extern const size_t CST_END_RING_NOTE_COUNT;
 #define CST_REMINDER_ALERT_PERIOD_MS 0
 #define CST_END_ALERT_PERIOD_MS 0
 
-/* CST-06 : la LED complète l'écran pendant une alerte (éclat bref). */
-#define CST_ALERT_LED true
+/*
+ * CST-06 : la LED complète l'écran pendant une alerte (éclat bref).
+ * Désactivée sur le CoreInk : la LED est trop petite pour être vue
+ * (vérifications B7 et soirée 2), et chaque éclat réveille l'ESP32.
+ */
+#define CST_ALERT_LED false
 #define CST_ALERT_LED_PERIOD_MS (4 * SECOND_MS)
 #define CST_ALERT_LED_FLASH_MS 30
 

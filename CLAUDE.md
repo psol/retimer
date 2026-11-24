@@ -136,9 +136,9 @@ Ce qui reste conforme à SPEC.md :
 
 ### Alertes à l'écran
 
-La fiche technique du CoreInk mentionne une LED, mais son emplacement sur le
-boîtier n'est pas évident : on peut l'utiliser en complément, mais on ne compte
-pas que sur elle pour les alertes (CMD-07, MAT-05). Le signal principal passe
+La fiche technique du CoreInk mentionne une LED, mais elle est trop petite pour
+être vue (vérifié sur la carte) : elle n'est pas utilisée pour les alertes
+(`CST_ALERT_LED` à `false`, CMD-07, MAT-05). Le signal principal passe
 par l'écran, en inversant le noir et le blanc, par exemple :
 
 - **alerte de rappel** : seule la zone du rappel (en bas) est inversée ;
