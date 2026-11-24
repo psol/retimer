@@ -51,7 +51,11 @@ void power_init(void)
     gpio_config(&hold);
     gpio_set_level(PIN_HOLD, 1);
     gpio_hold_dis(PIN_HOLD);
-    /* On la fige à 1 pour que la veille profonde ne coupe pas l'alimentation. */
+    /*
+     * On la fige de nouveau à 1, dès maintenant, pour que la prochaine veille
+     * profonde ne coupe pas l'alimentation, d'où qu'elle soit déclenchée.
+     * Figée, la broche continue de sortir 1 pendant le fonctionnement.
+     */
     gpio_hold_en(PIN_HOLD);
     gpio_deep_sleep_hold_en();
 }
