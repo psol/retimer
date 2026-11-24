@@ -329,7 +329,19 @@ traiter dans une étape suivante, après les essais :
      démarrage à chaque réveil de veille profonde), gardés dans une version
      de développement ;
   4. fréquence du CPU à 80 MHz au lieu de 160 MHz ;
-  5. couper la sortie 32 kHz de l'horloge BM8563 par I2C au démarrage.
+  5. ~~couper la sortie 32 kHz de l'horloge BM8563 par I2C au démarrage~~ :
+     abandonné le 24 novembre 2026, la broche CLKOUT n'est pas connectée
+     (schéma lu par Benoît) : rien à gagner côté carte.
+  Éléments chiffrés trouvés depuis (calculs d'après le schéma, non mesurés,
+  détail dans `docs/coreink.md`, section 6) : le pont de mesure de la batterie
+  (R41 + R42, 25,1 kΩ) est branché en permanence et consomme ~170 µA, plus de
+  quinze fois l'ESP32 en veille profonde ; R32 ajoute ~42 µA tant que le
+  maintien GPIO 12 est actif ; le plancher théorique en veille profonde est
+  d'environ 230 µA avant les convertisseurs (de l'ordre de 70 jours sur la
+  batterie de 390 mAh). La lecture de l'ADC, elle, est négligeable. Le courant
+  de repos des convertisseurs est inconnu. Priorité de la mesure d'autonomie :
+  courant total sur batterie en veille profonde, avant toute optimisation du
+  logiciel.
   Pour le point 1 : l'attente est dans `wait_ready()` (eink_display.c), une
   boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
   (`CONFIG_PM_ENABLE=n`), le cœur s'arrête entre deux tics mais la PLL et les
@@ -348,6 +360,31 @@ traiter dans une étape suivante, après les essais :
   WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
   d'affichage avec réveil par les boutons, veille profonde en Veille, écran
   jamais redessiné à l'identique.
+- **Pistes d'utilisation de l'horloge BM8563** (discussion du 24 novembre 2026,
+  aucune mise en œuvre décidée ; détail et réserves dans `docs/coreink.md`,
+  section 4, « La BM8563 »). Schéma lu par Benoît : VDD sur SYS_BAT (l'horloge
+  compte carte éteinte), CLKOUT non connectée, INT en parallèle sur GPIO 19 et
+  sur PWR_TRIG. Trois options à comparer après mesure :
+  - **A** : veille profonde actuelle (horloge lente 8MD256, broches RTC) ;
+  - **B** : veille légère pendant les décomptes, réveil par INT sur GPIO 19
+    (alarme ou minuterie programmée par I²C dans le BM8563) ;
+  - **C** : extinction complète, l'alarme du BM8563 rallume la carte par
+    PWR_TRIG. Réserves : effacer le drapeau d'alarme avant d'éteindre (sinon la
+    carte ne s'éteint pas) ; seuls le bouton marche et l'alarme rallument (pas
+    la molette) ; état de la minuterie à garder dans le BM8563 ; démarrage à
+    froid plus long ; gain limité tant que le pont de batterie reste branché
+    (~60 µA sur ~230 µA).
+  Mesures proposées (`docs/verifications-carte.md`, soirée F) : alarme à
+  1 minute, effacement du drapeau, réveil de la veille légère par GPIO 19,
+  courant dans chaque mode, dérive de l'horloge lente sur 30 min à deux
+  températures.
+- **Rafraîchissement de l'écran** (fiche du GDEY0154D67, valable par hypothèse
+  pour le GDEW0154M09) : rafraîchir au moins toutes les 24 h, et un complet
+  après 5 partiels consécutifs. À comparer à `CST_DISPLAY_PARTIALS_BEFORE_FULL`
+  et à l'écran de veille laissé affiché une nuit. À poser à Benoît (pas à
+  inscrire dans SPEC.md sans son accord). Ajouter aux essais un compteur de
+  rafraîchissements (complets et partiels) en mémoire RTC, affiché au
+  diagnostic, et des photos du contraste avant et après plusieurs heures.
 - **Format de l'image** (remarque de Benoît, 24 novembre 2026) : `render`
   dessine en « 1 = noir » et le pilote recopie chaque ligne en l'inversant
   pour le contrôleur. Passer à `render` une option de rendu (polarité des

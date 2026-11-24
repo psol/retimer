@@ -47,10 +47,14 @@ recommandait plutôt :
   LCD, deux encodeurs rotatifs et deux piles AA (~70 €), la plus sobre en veille ;
 - **packagé** : un M5Stack PaperMono (e-paper tactile, NFC) ou un PaperS3.
 
-Le CoreInk (ESP32-PICO-D4, e-ink 1,54" 200×200, molette trois positions,
-bouton, buzzer, horloge BM8563, batterie LiPo de 390 mAh, boîtier) remplit les
-critères obligatoires, mais avec des limites connues : écran petit, buzzer
-faible, pas de piles du commerce, pas d'encodeurs.
+Le CoreInk (ESP32-PICO-D4, cœur Xtensa LX6, e-ink 1,54" 200×200 GDEW0154M09,
+molette trois positions, bouton, buzzer, horloge BM8563, batterie LiPo de
+390 mAh, boîtier) remplit les critères obligatoires, mais avec des limites
+connues : écran petit, buzzer faible, pas de piles du commerce, pas
+d'encodeurs. L'écran GDEW0154M09 est arrêté (remplacé par le GDEY0154D67, même
+brochage mais autres commandes) et fonctionne de 0 à 50 °C : une cuisine
+convient, pas un four ouvert. Détails, durée de vie et consommation : voir
+[docs/coreink.md](docs/coreink.md).
 
 ### La question ouverte : e-ink ou Sharp Memory LCD
 
@@ -72,9 +76,14 @@ Points à observer pendant les essais :
 2. rendu du clignotement de démarrage imminent ;
 3. intérêt de l'affichage réduit « 12:-- » (MAT-04) ;
 4. réveil par la molette et le bouton depuis la veille (non documenté par
-   M5Stack) ;
+   M5Stack ; vérifié depuis le 24 novembre 2026) et réveil par l'alarme du
+   BM8563 depuis l'extinction complète (à tester) ;
 5. audibilité du buzzer en cuisine ;
-6. autonomie réelle de la batterie.
+6. autonomie réelle de la batterie : courant total sur batterie dans chaque
+   mode (veille profonde, veille légère, extinction). Le pont de mesure de la
+   batterie consomme à lui seul environ 170 µA en permanence, plus que
+   l'ESP32 en veille profonde (calcul d'après le schéma, `docs/coreink.md`,
+   section 6).
 
 ## Interface réduite (CoreInk, option 3)
 
@@ -228,6 +237,13 @@ Points de conception :
 - le prochain réveil est calculé par `kitchen_timer` (échéance, rafraîchissement
   de l'affichage, motif d'alerte) et appliqué par `power` (GEN-05) ;
 - on commence par la veille profonde de l'ESP32 (réveil par minuterie et par
-  broche). L'extinction complète avec réveil par l'horloge BM8563 consomme
-  moins, mais les boutons ne réveilleraient peut-être plus l'appareil : à
-  mesurer avant de l'adopter.
+  broche). L'extinction complète avec réveil par l'horloge BM8563 est faisable
+  matériellement d'après le schéma lu par Benoît le 24 novembre 2026 : VDD du
+  BM8563 sur SYS_BAT (l'horloge compte carte éteinte), INT reliée à PWR_TRIG,
+  qui rallume la carte. Mais seuls le bouton marche et l'alarme rallument
+  (la molette ne passe pas par PWR_TRIG), le drapeau d'alarme doit être
+  effacé avant l'extinction (sinon la carte ne s'éteint pas), l'état de la
+  minuterie doit être gardé dans le BM8563, et le gain est limité tant que le
+  pont de batterie (~170 µA) reste branché : à tester et à mesurer avant de
+  l'adopter. La broche CLKOUT de la BM8563 n'est pas connectée. Voir
+  `docs/coreink.md`, section 4, « La BM8563 ».
