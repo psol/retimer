@@ -334,7 +334,11 @@ traiter dans une étape suivante, après les essais :
   boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
   (`CONFIG_PM_ENABLE=n`), le cœur s'arrête entre deux tics mais la PLL et les
   périphériques restent alimentés. Remplacer par un réveil sur BUSY à 1 et
-  `esp_light_sleep_start()`.
+  `esp_light_sleep_start()`. Conception (discutée avec Benoît) : `power`
+  offre un service unique `power_wait_until(broche, niveau, délai max)` qui
+  met en veille légère ; le pilote d'écran reçoit une fonction d'attente à
+  l'initialisation (`eink_config_t`) et ne connaît pas `power` ; `main` fait
+  le branchement. Même mécanisme pour les notes du buzzer.
   Puis mesurer l'autonomie sur batterie pour chiffrer le gain. Déjà en place :
   WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
   d'affichage avec réveil par les boutons, veille profonde en Veille, écran
