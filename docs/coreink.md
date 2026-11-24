@@ -36,7 +36,7 @@ Sources en fin de fiche.
 | 12 | Maintien de l'alimentation (« HOLD ») | sortie | doc, code, schéma (Benoît) | À mettre à 1 dès le démarrage, sinon la carte s'éteint quand on relâche le bouton marche. À 0 : extinction complète (sur batterie). Commande la grille de Q5 par la diode D14 (voir 3, « Circuit d'alimentation »). Broche de configuration (MTDI) de l'ESP32 : la diode D14 l'isole du circuit (lecture Claude) ; le réveil marche depuis la correction du maintien (carte, B13 résolu). |
 | 2 | Buzzer | sortie MLI | doc, code | Piloté par un transistor S8050 (Q1, schéma). M5Stack le commande par une fréquence (LEDC), donc buzzer **passif** : à vérifier. |
 | 10 | LED verte | sortie | doc, code | Active à l'état bas (vérifié, B7). Emplacement sur le boîtier peu visible (CLAUDE.md). |
-| 35 | Mesure de la batterie | entrée analogique (ADC1, canal 7) | code, schéma (Benoît) | Pont diviseur 20 kΩ / 5,1 kΩ (R41, R42) : V_bat = V_adc × 25,1 / 5,1. Le pont est **branché en permanence** sur SYS_BAT : il consomme environ 170 µA (voir 6). |
+| 35 | Mesure de la batterie | entrée analogique (ADC1, canal 7) | code, schéma (Benoît) | Pont diviseur 20 kΩ / 5,1 kΩ (R41, R42) : V_bat = V_adc × 25,1 / 5,1. Le pont est alimenté **derrière Q4** (schéma, Benoît) : il consomme environ 170 µA seulement carte allumée, veille profonde comprise, et rien carte éteinte (voir 6). |
 | 19 | Interruption de l'horloge BM8563 (INT) | entrée, actif bas | code, schéma (Benoît) | M5Unified l'utilise pour le réveil par l'alarme. Pas un GPIO RTC : réveille la veille légère, pas la profonde. Rappelée vers MCU_VDD par R37 (10 kΩ), derrière la diode D12. La même ligne INT agit sur l'allumage (`PWR_TRIG`, diode D13) : voir 4, « La BM8563 ». |
 | 21, 22 | I²C interne (SDA, SCL) : horloge BM8563, adresse 0x51 | — | doc, code, schéma (Benoît) | |
 | 9 | Écran : CS | sortie | doc, code | |
@@ -182,9 +182,9 @@ en mémoire RTC, affiché au diagnostic) est prévue dans les essais.
 - **Mesure de la batterie** : ADC1 canal 7 (GPIO 35), atténuation 11 dB,
   V_bat = V_adc × 25,1 / 5,1 (code M5Unified, cohérent avec R41 et R42 du
   schéma). Seuil de batterie faible (CST-09) : à fixer, valeur de départ
-  3,5 V. Schéma lu par Benoît le 24/11/2026 : **R41 (20 kΩ)** de SYS_BAT à
+  3,5 V. Schéma lu par Benoît le 24/11/2026 : **R41 (20 kΩ)** de la sortie de Q4 (donc carte allumée seulement) à
   GPIO 35, **R42 (5,1 kΩ)** de GPIO 35 à la masse, **C30 (1 µF)** en
-  parallèle. Le pont est en permanence sous tension : voir 6 pour son coût.
+  parallèle. Le pont est derrière Q4 : sous tension seulement carte allumée (voir 6 pour son coût).
 
 ### Circuit d'alimentation (page « PWR_SW & ADC » du schéma)
 
@@ -345,8 +345,8 @@ Le mode « CLKOUT + interruption » n'existe pas sur cette carte.
 - **l'état de la minuterie est perdu** (mémoire RTC de l'ESP32 coupée) :
   l'échéance devrait être gardée dans la BM8563 (quelques octets seulement) ;
 - **démarrage à froid** plus long (initialisation de l'écran), à mesurer ;
-- le gain d'énergie est modeste tant que le pont de la batterie reste branché
-  (voir 6).
+- le gain d'énergie est important : le pont de batterie est coupé avec Q4, il
+  ne reste que la BM8563 et les fuites du chargeur (voir 6).
 
 **Coût de la BM8563** : de l'ordre de 0,25 µA (général), déjà payé puisque la
 puce est toujours alimentée. Chaque échange I²C (quelques octets) dure de
@@ -377,7 +377,7 @@ courant sur batterie, mode par mode, tranchera (CLAUDE.md, point 6 des essais).
 | ESP32, veille profonde | ~10 µA, plus ~5 µA avec l'horloge 8MD256 | en Veille | fiche Espressif ; mesure à faire |
 | ESP32, veille légère | ~0,8 mA | pendant les décomptes | fiche Espressif ; mesure à faire |
 | ESP32, CPU actif à 160 MHz | ~40 à 50 mA (~25 à 30 mA à 80 MHz) | à chaque réveil, attentes d'écran | fiche Espressif ; non mesuré |
-| **Pont de mesure de la batterie** (R41 + R42 = 25,1 kΩ) | **~170 µA à 4,2 V**, ~150 µA à 3,7 V, ~130 µA à 3,3 V | **en permanence**, même carte éteinte | schéma + calcul |
+| **Pont de mesure de la batterie** (R41 + R42 = 25,1 kΩ) | **~170 µA à 4,2 V**, ~150 µA à 3,7 V, ~130 µA à 3,3 V | **carte allumée seulement** (derrière Q4), veille profonde comprise ; rien carte éteinte | schéma (Benoît) + calcul |
 | R32 (100 kΩ) | ~42 µA à 4,2 V | tant que GPIO 12 est à 1 (maintien), donc aussi en veille profonde | schéma + calcul |
 | R38 puis R37 (10 kΩ chacune) | jusqu'à ~420 µA (R38, 4,2 V) et ~270 µA (R37, via D12) | **seulement tant qu'INT est à 0**, c'est-à-dire tant que le drapeau d'alarme n'est pas effacé | schéma + calcul |
 | BM8563 | ~0,25 µA | en permanence | général |
@@ -387,21 +387,28 @@ courant sur batterie, mode par mode, tranchera (CLAUDE.md, point 6 des essais).
 Ce que l'on en tire :
 
 - **Le coût de la mesure de la batterie, c'est le pont diviseur, pas la
-  lecture.** Lire l'ADC est négligeable ; mais le pont de 25,1 kΩ est branché
-  en permanence sur SYS_BAT, avant l'interrupteur Q4 : il consomme ~170 µA, soit
-  **plus de quinze fois** l'ESP32 en veille profonde. D'après le schéma lu, il
-  n'y a aucun interrupteur pour le couper par logiciel. Seule une modification
-  du matériel (une résistance plus grande) le réduirait ; ce n'est pas prévu.
+  lecture.** Lire l'ADC est négligeable ; mais le pont de 25,1 kΩ consomme
+  ~170 µA, soit **plus de quinze fois** l'ESP32 en veille profonde. Il est
+  alimenté par la sortie de Q4 (lu par Benoît le 24/11/2026) : il ne coûte
+  donc que **carte allumée**, y compris pendant toute la veille profonde, et
+  rien carte éteinte. Pas d'interrupteur dédié pour le couper par logiciel
+  carte allumée. Les valeurs basses (20 kΩ et 5,1 kΩ, avec C30 de 1 µF) sont
+  typiques d'un choix pour l'ADC de l'ESP32, qui supporte mal une source à
+  haute impédance (général, supposition de conception).
 - **Plancher en veille profonde (hors convertisseurs)** : 10 + 5 + 170 + 42 ≈
   230 µA. À 390 mAh, cela donne de l'ordre de 70 jours de veille profonde en
   théorie, avant courant de repos des convertisseurs et auto-décharge.
-- **Plancher en extinction complète** : ~170 µA (le pont) + ~0,25 µA (BM8563).
-  Le gain par rapport à la veille profonde se limite donc à environ 60 µA (un
-  quart), plus le courant de repos des convertisseurs, inconnu. Raison de plus
-  pour **mesurer avant d'adopter l'extinction complète**.
+- **Plancher en extinction complète** : seulement la BM8563 (~0,25 µA) et les
+  fuites carte éteinte (chargeur TP4057 notamment, non chiffrées), soit de
+  l'ordre de quelques µA, **à mesurer**. Le gain par rapport à la veille
+  profonde est donc d'environ **deux ordres de grandeur** (~230 µA contre
+  quelques µA), ce qui rend l'extinction complète intéressante pour les
+  réveils rares (toutes les dix minutes ou plus), mais pas pour les réveils
+  chaque minute, dont le coût est celui du démarrage à froid (~0,7 mA de
+  moyenne, estimation).
 - Pendant un décompte en veille légère, le total est de l'ordre de 1 mA
   (0,8 mA + 0,2 mA), soit une autonomie de l'ordre de 16 jours de décompte
-  continu. Le pont pèse peu ici.
+  continu. Le pont pèse environ un cinquième de ce total.
 - **L'écran pèse peu.** Un partiel (0,33 s à 6,6 mW) coûte environ 2 mJ. À un
   par seconde, la moyenne reste de l'ordre de 2 mW, à comparer à ~150 mW pour
   le processeur éveillé à 160 MHz. Le gain d'énergie de l'affichage réduit

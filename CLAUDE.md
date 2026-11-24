@@ -81,8 +81,8 @@ Points à observer pendant les essais :
 5. audibilité du buzzer en cuisine ;
 6. autonomie réelle de la batterie : courant total sur batterie dans chaque
    mode (veille profonde, veille légère, extinction). Le pont de mesure de la
-   batterie consomme à lui seul environ 170 µA en permanence, plus que
-   l'ESP32 en veille profonde (calcul d'après le schéma, `docs/coreink.md`,
+   batterie consomme à lui seul environ 170 µA tant que la carte est allumée
+   (il est coupé avec Q4 à l'extinction), plus que l'ESP32 en veille profonde (calcul d'après le schéma, `docs/coreink.md`,
    section 6).
 
 ## Interface réduite (CoreInk, option 3)
@@ -243,7 +243,8 @@ Points de conception :
   qui rallume la carte. Mais seuls le bouton marche et l'alarme rallument
   (la molette ne passe pas par PWR_TRIG), le drapeau d'alarme doit être
   effacé avant l'extinction (sinon la carte ne s'éteint pas), l'état de la
-  minuterie doit être gardé dans le BM8563, et le gain est limité tant que le
-  pont de batterie (~170 µA) reste branché : à tester et à mesurer avant de
-  l'adopter. La broche CLKOUT de la BM8563 n'est pas connectée. Voir
+  minuterie doit être gardé dans le BM8563. Le gain d'énergie est important
+  (le pont de batterie, ~170 µA, est coupé avec Q4 ; reste quelques µA) mais
+  le démarrage à froid coûte cher pour des réveils fréquents : à tester et à
+  mesurer avant de l'adopter. La broche CLKOUT de la BM8563 n'est pas connectée. Voir
   `docs/coreink.md`, section 4, « La BM8563 ».

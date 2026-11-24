@@ -334,13 +334,15 @@ traiter dans une étape suivante, après les essais :
      (schéma lu par Benoît) : rien à gagner côté carte.
   Éléments chiffrés trouvés depuis (calculs d'après le schéma, non mesurés,
   détail dans `docs/coreink.md`, section 6) : le pont de mesure de la batterie
-  (R41 + R42, 25,1 kΩ) est branché en permanence et consomme ~170 µA, plus de
-  quinze fois l'ESP32 en veille profonde ; R32 ajoute ~42 µA tant que le
-  maintien GPIO 12 est actif ; le plancher théorique en veille profonde est
-  d'environ 230 µA avant les convertisseurs (de l'ordre de 70 jours sur la
-  batterie de 390 mAh). La lecture de l'ADC, elle, est négligeable. Le courant
-  de repos des convertisseurs est inconnu. Priorité de la mesure d'autonomie :
-  courant total sur batterie en veille profonde, avant toute optimisation du
+  (R41 + R42, 25,1 kΩ) consomme ~170 µA, plus de quinze fois l'ESP32 en veille
+  profonde, mais seulement carte allumée (il est alimenté derrière Q4, lu par
+  Benoît le 24 novembre 2026) ; R32 ajoute ~42 µA tant que le maintien GPIO 12
+  est actif ; le plancher théorique en veille profonde est d'environ 230 µA
+  avant les convertisseurs (de l'ordre de 70 jours sur la batterie de
+  390 mAh), contre quelques µA en extinction complète. La lecture de l'ADC,
+  elle, est négligeable. Le courant de repos des convertisseurs et les fuites
+  du chargeur sont inconnus. Priorité de la mesure d'autonomie : courant total
+  sur batterie en veille profonde et éteint, avant toute optimisation du
   logiciel.
   Pour le point 1 : l'attente est dans `wait_ready()` (eink_display.c), une
   boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
@@ -372,8 +374,9 @@ traiter dans une étape suivante, après les essais :
     PWR_TRIG. Réserves : effacer le drapeau d'alarme avant d'éteindre (sinon la
     carte ne s'éteint pas) ; seuls le bouton marche et l'alarme rallument (pas
     la molette) ; état de la minuterie à garder dans le BM8563 ; démarrage à
-    froid plus long ; gain limité tant que le pont de batterie reste branché
-    (~60 µA sur ~230 µA).
+    froid plus long (coûteux pour des réveils chaque minute, ~0,7 mA de moyenne
+    estimés) ; en revanche ~230 µA de la veille profonde tombent à quelques µA
+    (pont de batterie coupé avec Q4), donc intéressant pour des réveils rares.
   Mesures proposées (`docs/verifications-carte.md`, soirée F) : alarme à
   1 minute, effacement du drapeau, réveil de la veille légère par GPIO 19,
   courant dans chaque mode, dérive de l'horloge lente sur 30 min à deux
