@@ -13,10 +13,10 @@
 #include <string.h>
 
 #include "constants.h"
+#include "controller.h"
 #include "eink_display.h"
 #include "esp_attr.h"
 #include "esp_log.h"
-#include "adjust.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
@@ -61,6 +61,7 @@ static RTC_DATA_ATTR rtc_memory_t rtc;
 static input_t input;
 static SemaphoreHandle_t input_lock;
 static QueueHandle_t input_queue;
+static controller_t controller;
 static render_image_t image;
 static bool low_battery = false;
 static int64_t last_battery_measure = INT64_MIN / 2;
@@ -81,74 +82,39 @@ static void turn_off(void)
     ktimer_init(&rtc.timer);
 }
 
-/* Applique un événement de saisie à la minuterie. */
+/* Applique un événement de saisie à la minuterie (composant controller). */
 static uint32_t apply(const input_event_t *ev, int64_t now)
 {
-    ktimer_t *m = &rtc.timer;
-    ktimer_view_t view;
-    ktimer_view(m, now, &view);
-
-    /*
-     * Affichage réduit : le premier cran (molette ou bouton du rappel) ne
-     * fait que montrer les secondes ; les crans suivants règlent (soirée 2).
-     * Les répétitions de ce même appui, si la molette reste tenue, ne règlent
-     * pas non plus (soirée 2, E18 : 44:02 devenait 44:00).
-     */
-    static bool revealing = false;
-    static input_type_t revealed_type;
-    if (ev->repeat == 0) {
-        revealing = false;
-    } else if (revealing && ev->type == revealed_type) {
-        return SIGNAL_NONE;
-    }
-    if (view.reduced && ev->repeat == 0 &&
-        (ev->type == EV_TOTAL_PLUS || ev->type == EV_TOTAL_MINUS ||
-         ev->type == EV_NEXT_REMINDER)) {
+    controller_result_t r = controller_apply(&controller, &rtc.timer, ev, now);
+    switch (r.action) {
+    case CONTROLLER_REVEALED:
         ESP_LOGI(TAG, "affichage complet, sans réglage");
-        ktimer_reveal(m, now);
-        revealing = true;
-        revealed_type = ev->type;
-        return SIGNAL_NONE;
-    }
-
-    switch (ev->type) {
-    case EV_TOTAL_PLUS:
-    case EV_TOTAL_MINUS: {
-        /* REG-01 : on part de la valeur affichée. */
-        adjust_direction_t direction =
-            ev->type == EV_TOTAL_PLUS ? ADJUST_UP : ADJUST_DOWN;
-        int64_t start_value = view.state == STATE_FINISHED ? 0 : view.total_ms;
-        int64_t updated = adjust_total(start_value, direction, ev->repeat);
-        ESP_LOGI(TAG, "globale %lld -> %lld ms", (long long)start_value,
-                 (long long)updated);
-        return ktimer_set_total(m, now, updated);
-    }
-    case EV_NEXT_REMINDER: {
-        int64_t start_value = view.state == STATE_FINISHED ? 0 : m->interval_ms;
-        int64_t total = view.state == STATE_FINISHED ? 0 : view.total_ms;
-        int64_t new_interval = adjust_next_reminder(start_value, total);
-        ESP_LOGI(TAG, "rappel %lld -> %lld ms", (long long)start_value,
-                 (long long)new_interval);
-        return ktimer_set_reminder(m, now, new_interval);
-    }
-    case EV_ACKNOWLEDGE:
+        break;
+    case CONTROLLER_ADJUSTED:
+        ESP_LOGI(TAG, "%s %lld -> %lld ms",
+                 ev->type == EV_NEXT_REMINDER ? "rappel" : "globale",
+                 (long long)r.before_ms, (long long)r.after_ms);
+        break;
+    case CONTROLLER_ACKNOWLEDGED:
         ESP_LOGI(TAG, "acquitter");
-        return ktimer_acknowledge(m, now);
-    case EV_POWER_OFF:
+        break;
+    case CONTROLLER_POWER_OFF:
         turn_off();
-        return SIGNAL_NONE;
+        break;
+    case CONTROLLER_NONE:
+        break;
     }
-    return SIGNAL_NONE;
+    return r.signals;
 }
 
 static void ring(uint32_t signals)
 {
-    if (signals & SIGNAL_END_RING) {
-        ESP_LOGI(TAG, "sonnerie de fin");
-        signals_ring(CST_END_RING, CST_END_RING_NOTE_COUNT);
-    } else if (signals & SIGNAL_REMINDER_RING) {
-        ESP_LOGI(TAG, "sonnerie de rappel");
-        signals_ring(CST_REMINDER_RING, CST_REMINDER_RING_NOTE_COUNT);
+    size_t count;
+    const cst_note_t *notes = controller_ring(signals, &count);
+    if (notes != NULL) {
+        ESP_LOGI(TAG, "sonnerie de %s",
+                 notes == CST_END_RING ? "fin" : "rappel");
+        signals_ring(notes, count);
     }
 }
 
@@ -159,8 +125,7 @@ static void measure_battery(int64_t now)
     }
     last_battery_measure = now;
     uint32_t mv = power_battery_mv();
-    /* ERR-07. Sur USB, la mesure donne la tension de charge. */
-    low_battery = mv > 0 && mv < CST_LOW_BATTERY_MV;
+    low_battery = controller_low_battery(mv); /* ERR-07 */
     ESP_LOGI(TAG, "batterie %lu mV", (unsigned long)mv);
 }
 
@@ -170,16 +135,8 @@ static void show_screen(int64_t now)
     ktimer_view(&rtc.timer, now, &view);
     render_options_t options = {.low_battery = low_battery};
     render_draw(&image, &view, &options);
-    /*
-     * Rafraîchissement complet à l'entrée et à la sortie d'une alerte
-     * inversée : en partiel, l'image précédente reste visible en blanc sur
-     * noir (vérification B5 du 23 novembre 2026).
-     */
-    static bool was_inverted = false;
-    bool inverted =
-        view.alert_inverted && (view.end_alert || view.reminder_alert);
-    eink_show(image.bytes, inverted != was_inverted);
-    was_inverted = inverted;
+    /* Complet à l'entrée et à la sortie d'une alerte inversée (B5). */
+    eink_show(image.bytes, controller_full_refresh(&controller, &view));
     rtc.displayed = image;
 
     /* CST-06 : éclat de la LED en complément d'une alerte. */
@@ -231,6 +188,7 @@ void app_main(void)
         ESP_LOGI(TAG, "Retimer : réveil de veille profonde");
     }
 
+    controller_init(&controller);
     signals_init();
     input_hw_init();
     input_init(&input);
@@ -279,13 +237,10 @@ void app_main(void)
         }
 
         now = power_now_ms();
-        int64_t wakeup = ktimer_next_wakeup(&rtc.timer, now);
         xSemaphoreTake(input_lock, portMAX_DELAY);
-        int64_t r = input_next_wakeup(&input);
+        int64_t input_wakeup = input_next_wakeup(&input);
         xSemaphoreGive(input_lock);
-        if (r < wakeup) {
-            wakeup = r;
-        }
+        int64_t wakeup = controller_next_wakeup(&rtc.timer, now, input_wakeup);
 
         if (rtc.timer.state == STATE_IDLE) {
             /* MAT-12 : l'écran garde le message de veille sans consommer. */
