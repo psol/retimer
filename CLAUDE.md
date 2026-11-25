@@ -211,6 +211,12 @@ Règles :
   un portage ne réécrit que l'implémentation ;
 - la logique métier se compile et se teste aussi sur le Mac (tests sur l'hôte),
   sans carte ;
+- **tout bogue qui peut se tester sans la carte a un test automatique** sur
+  l'hôte (`test/host`), ajouté avec sa correction. Si la logique en cause est
+  dans `main` ou dans un pilote, on la sort d'abord dans un composant sans
+  dépendance au matériel. Le test doit échouer sans la correction. Un bogue
+  qui ne se teste que sur la carte (veille, broches, horloge, tâches
+  FreeRTOS) a une vérification dans `docs/verifications-carte.md` ;
 - le code est en anglais (noms de fichiers, de composants, de fonctions, de
   types, de variables, de constantes), les commentaires et la documentation
   restent en français. Les identifiants d'exigences restent tels quels, y
@@ -224,11 +230,12 @@ Découpage prévu (composants ESP-IDF sous `components/`) :
 | `adjust` (réglage) | Pas de réglage selon la valeur de départ et l'accélération (REG, CST-03, CST-04), liste des intervalles de rappel. | Non |
 | `constants` | Tables de constantes (GEN-06, CST). | Non |
 | `render` (rendu) | Construit l'image à afficher (temps restants, alertes, clignotement, affichage réduit) dans un tampon, sans connaître l'écran. | Non |
+| `controller` (commande) | Applique les événements de saisie à la minuterie (réglage, affichage réduit, acquittement, extinction) et prend les petites décisions de `main` : rafraîchissement complet de l'écran, sonnerie, batterie faible, prochain réveil. | Non |
 | `input` (saisie) | Traduit la molette et les boutons en événements abstraits (globale +/-, rappel suivant, acquitter) : anti-rebond, répétition accélérée. | Oui (CoreInk) |
 | `eink_display` | Pilote de l'écran e-ink : envoi du tampon, mise à jour partielle, rafraîchissement complet périodique contre les traces. | Oui (CoreInk) |
 | `signals` (signaux) | Motifs de sonnerie (buzzer) et d'alerte (LED, écran). | Oui (CoreInk) |
 | `power` (veille, alimentation) | Mise en veille profonde de l'ESP32, réveil par minuterie et par broche, conservation de l'état en mémoire RTC. | Oui (ESP32) |
-| `main` | Assemble le tout : réveil, lecture des événements, logique, rendu, programmation du prochain réveil, mise en veille. | Oui |
+| `main` | Branche les pilotes : réveil, tâche de saisie, appel de `controller`, rendu, affichage, programmation du prochain réveil, mise en veille. | Oui |
 
 Points de conception :
 

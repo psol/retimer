@@ -37,7 +37,7 @@ target_link_options(unity PUBLIC ${SANITIZERS})
 # Composants sans dépendance au matériel.
 set(LOGIC_SOURCES "")
 set(LOGIC_INCLUDES "")
-foreach(component constants adjust kitchen_timer input render)
+foreach(component constants adjust kitchen_timer input render controller)
   file(GLOB _sources ${COMPONENTS}/${component}/*.c)
   list(APPEND LOGIC_SOURCES ${_sources})
   list(APPEND LOGIC_INCLUDES ${COMPONENTS}/${component}/include)
