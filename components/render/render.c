@@ -278,12 +278,6 @@ static void text_centered(render_image_t *im, int y, const char *t, int scale)
     text(im, (RENDER_WIDTH - text_width(t, scale)) / 2, y, t, scale);
 }
 
-static void text_right(render_image_t *im, int x_right, int y,
-                       const char *t, int scale)
-{
-    text(im, x_right - text_width(t, scale), y, t, scale);
-}
-
 /* ---- Format des durées -------------------------------------------------- */
 
 void render_format_duration(int64_t duration_ms, bool reduced, char *out)
@@ -295,8 +289,12 @@ void render_format_duration(int64_t duration_ms, bool reduced, char *out)
         duration_ms = CST_TOTAL_MAX_MS;
     }
     if (reduced) {
-        /* MAT-04 : minutes arrondies au-dessus, sans les secondes. */
-        int minutes = (int)((duration_ms + MINUTE_MS - 1) / MINUTE_MS);
+        /*
+         * MAT-04 : les minutes de l'affichage complet, sans les secondes.
+         * 2:59 s'affiche « 02:-- », comme « 02:59 » (soirée 2).
+         */
+        int64_t seconds = (duration_ms + SECOND_MS - 1) / SECOND_MS;
+        int minutes = (int)(seconds / 60);
         int h = (minutes / 60) % 100;
         int m = minutes % 60;
         if (h > 0) {
@@ -343,7 +341,9 @@ static void battery_indicator(render_image_t *im)
 static void total_zone(render_image_t *im, const ktimer_view_t *view,
                        bool mask)
 {
-    text(im, MARGIN, MARGIN + 2, "TOTAL", 2);
+    /* DEM-02 : libellé fixe pendant le délai de démarrage. */
+    text(im, MARGIN, MARGIN + 2,
+         view->state == STATE_STARTING ? "AVANT DÉPART" : "TOTAL", 2);
     if (mask) {
         return; /* DEM-02 : phase éteinte du clignotement */
     }
@@ -376,18 +376,21 @@ static void reminder_zone(render_image_t *im, const ktimer_view_t *view,
     int available_width = RENDER_WIDTH - MARGIN - value_left;
     switch (view->reminder) {
     case REMINDER_OFF:
-        text_right(im, RENDER_WIDTH - MARGIN, middle - 10, "ARRÊT", 3);
-        return;
-    case REMINDER_SPENT: /* ECH-07 */
-        text_right(im, RENDER_WIDTH - MARGIN, middle - 17, "APRÈS", 2);
-        text_right(im, RENDER_WIDTH - MARGIN, middle + 3, "LA FIN", 2);
-        return;
+    case REMINDER_SPENT:
     case REMINDER_SET:
     case REMINDER_RUNNING:
     case REMINDER_ALERT: {
+        /*
+         * Rappel désactivé (intervalle nul) ou épuisé (ECH-07 : plus
+         * d'échéance avant la fin) : « 00:00 ». « ARRÊT » laissait croire
+         * qu'un bouton arrête la minuterie, « APRÈS LA FIN » déroutait
+         * (essai du 23 novembre 2026).
+         */
+        bool none = view->reminder == REMINDER_OFF ||
+                    view->reminder == REMINDER_SPENT;
         char t[10];
         bool reduced = view->reminder == REMINDER_RUNNING && view->reduced;
-        render_format_duration(view->reminder_ms, reduced, t);
+        render_format_duration(none ? 0 : view->reminder_ms, reduced, t);
         const digit_size_t *size =
             size_for(t, REMINDER_SIZES, SIZE_COUNT(REMINDER_SIZES),
                      available_width);
@@ -415,6 +418,18 @@ static void finished_screen(render_image_t *im, const ktimer_view_t *view)
     total_zone(im, view, false);
     rectangle(im, 0, RENDER_SEPARATOR_Y, RENDER_WIDTH, 2);
     text_centered(im, REMINDER_ZONE_Y + 20, "FIN", 5);
+}
+
+void render_message(render_image_t *im, const char *line1,
+                    const char *line2)
+{
+    memset(im->bytes, 0, sizeof im->bytes);
+    if (line1 != NULL) {
+        text_centered(im, 60, line1, 4);
+    }
+    if (line2 != NULL) {
+        text_centered(im, 120, line2, 2);
+    }
 }
 
 void render_draw(render_image_t *im, const ktimer_view_t *view,

@@ -110,6 +110,15 @@ static void test_DEM_03_action_restarts_delay(void)
 static void test_DEM_02_blink(void)
 {
     ktimer_set_total(&m, T0, M(1));
+    if (CST_BLINK_PERIOD_MS <= 0) {
+        /* Sans clignotement : aucun réveil avant la fin du délai. */
+        look(T0 + S(1));
+        TEST_ASSERT_FALSE(view.blink_hidden);
+        TEST_ASSERT_EQUAL(STATE_STARTING, view.state);
+        TEST_ASSERT_EQUAL_INT64(T0 + CST_START_DELAY_MS,
+                                ktimer_next_wakeup(&m, T0));
+        return;
+    }
     look(T0);
     TEST_ASSERT_FALSE(view.blink_hidden);
     look(T0 + CST_BLINK_PERIOD_MS / 2);
@@ -428,29 +437,93 @@ static void test_PLG_03_short_countdown(void)
 /* MAT-04, CST-08 : affichage réduit loin des échéances, complet ensuite. */
 static void test_MAT_04_reduced_display(void)
 {
-    int64_t start_value = start_countdown(M(10), 0);
+    int64_t start_value = start_countdown(H(1), 0);
+    /* Affichage complet pendant les premières secondes du décompte. */
+    look(start_value);
+    TEST_ASSERT_FALSE(view.reduced);
+    look(start_value + CST_FULL_DISPLAY_AT_START_MS - 1);
+    TEST_ASSERT_FALSE(view.reduced);
+    look(start_value + CST_FULL_DISPLAY_AT_START_MS);
+    TEST_ASSERT_TRUE(view.reduced);
     look(start_value + M(5));
     TEST_ASSERT_TRUE(view.reduced);
-    look(start_value + M(10) - CST_FULL_DISPLAY_THRESHOLD_MS);
+    /* Réduit seulement au-delà de 30 min de globale. */
+    look(start_value + H(1) - CST_REDUCED_ABOVE_MS - 1);
+    TEST_ASSERT_TRUE(view.reduced);
+    look(start_value + H(1) - CST_REDUCED_ABOVE_MS);
     TEST_ASSERT_FALSE(view.reduced);
+}
+
+/* MAT-04 : un décompte de 30 min ou moins reste en affichage complet. */
+static void test_MAT_04_short_countdown_stays_full(void)
+{
+    int64_t start_value = start_countdown(CST_REDUCED_ABOVE_MS, 0);
+    look(start_value + M(1));
+    TEST_ASSERT_FALSE(view.reduced);
+}
+
+/* MAT-04 : montrer les secondes sans rien régler. */
+static void test_MAT_04_reveal_without_adjusting(void)
+{
+    int64_t start_value = start_countdown(H(1), 0);
+    int64_t t = start_value + M(1);
+    look(t);
+    TEST_ASSERT_TRUE(view.reduced);
+    int64_t end = m.end_ms;
+    ktimer_reveal(&m, t);
+    look(t);
+    TEST_ASSERT_FALSE(view.reduced);
+    TEST_ASSERT_EQUAL_INT64(end, m.end_ms);
+    look(t + CST_FULL_DISPLAY_AFTER_ADJUST_MS);
+    TEST_ASSERT_TRUE(view.reduced);
 }
 
 /* MAT-04 : la minuterie la plus proche de son échéance impose le rythme. */
 static void test_MAT_04_close_reminder_forces_full_display(void)
 {
-    int64_t start_value = start_countdown(M(30), M(2));
+    int64_t start_value = start_countdown(H(1), M(5));
     look(start_value + S(30));
     TEST_ASSERT_TRUE(view.reduced);
-    look(start_value + S(70));
+    look(start_value + M(3) + S(10));
+    TEST_ASSERT_FALSE(view.reduced);
+}
+
+/* MAT-04 : après un réglage pendant le décompte, on voit les secondes. */
+static void test_MAT_04_full_display_after_adjust(void)
+{
+    int64_t start_value = start_countdown(H(1), 0);
+    int64_t t = start_value + M(1);
+    look(t);
+    TEST_ASSERT_TRUE(view.reduced);
+    ktimer_set_total(&m, t, M(62));
+    look(t);
+    TEST_ASSERT_FALSE(view.reduced);
+    /* Réveil chaque seconde, puis retour à l'affichage réduit. */
+    TEST_ASSERT_EQUAL_INT64(t + S(1), ktimer_next_wakeup(&m, t + 1));
+    TEST_ASSERT_EQUAL_INT64(t + CST_FULL_DISPLAY_AFTER_ADJUST_MS,
+                            ktimer_next_wakeup(
+                                &m, t + CST_FULL_DISPLAY_AFTER_ADJUST_MS - 1));
+    look(t + CST_FULL_DISPLAY_AFTER_ADJUST_MS);
+    TEST_ASSERT_TRUE(view.reduced);
+    /* Pareil pour le rappel. */
+    ktimer_set_reminder(&m, t + S(20), M(5));
+    look(t + S(20));
     TEST_ASSERT_FALSE(view.reduced);
 }
 
 /* GEN-05 : en affichage réduit, un réveil par minute au plus. */
 static void test_GEN_05_wakeup_each_minute_in_reduced_display(void)
 {
-    int64_t start_value = start_countdown(M(10), 0);
-    int64_t t = start_value + S(1);
-    TEST_ASSERT_EQUAL_INT64(start_value + M(1), ktimer_next_wakeup(&m, t));
+    /* 59:40 s'affiche « 59:-- » ; « 58:-- » à 58:59. */
+    int64_t start_value = start_countdown(H(1), 0);
+    int64_t t = start_value + S(20);
+    TEST_ASSERT_EQUAL_INT64(start_value + M(1) + S(1),
+                            ktimer_next_wakeup(&m, t));
+    /* Fin de l'affichage complet du départ : réveil pour passer en réduit. */
+    TEST_ASSERT_EQUAL_INT64(start_value + CST_FULL_DISPLAY_AT_START_MS,
+                            ktimer_next_wakeup(
+                                &m, start_value + CST_FULL_DISPLAY_AT_START_MS -
+                                        1));
 }
 
 /* GEN-05 : en affichage complet, un réveil par seconde, sur le changement. */
@@ -466,9 +539,10 @@ static void test_GEN_05_wakeup_each_second_in_full_display(void)
 /* GEN-05 : passage de l'affichage réduit au complet au bon instant. */
 static void test_GEN_05_wakeup_when_switching_to_full_display(void)
 {
-    int64_t start_value = start_countdown(M(2) + S(30), 0);
-    int64_t t = start_value + M(1) + S(10); /* reste 1:20 */
-    TEST_ASSERT_EQUAL_INT64(start_value + M(1) + S(30),
+    int64_t start_value = start_countdown(M(31) + S(30), 0);
+    int64_t t = start_value + M(1); /* reste 30:30, « 30:-- » */
+    TEST_ASSERT_EQUAL_INT64(start_value + M(31) + S(30) -
+                                CST_REDUCED_ABOVE_MS,
                             ktimer_next_wakeup(&m, t));
 }
 
@@ -535,6 +609,9 @@ int main(void)
     RUN_TEST(test_PLG_03_short_countdown);
     RUN_TEST(test_MAT_04_reduced_display);
     RUN_TEST(test_MAT_04_close_reminder_forces_full_display);
+    RUN_TEST(test_MAT_04_full_display_after_adjust);
+    RUN_TEST(test_MAT_04_short_countdown_stays_full);
+    RUN_TEST(test_MAT_04_reveal_without_adjusting);
     RUN_TEST(test_GEN_05_wakeup_each_minute_in_reduced_display);
     RUN_TEST(test_GEN_05_wakeup_each_second_in_full_display);
     RUN_TEST(test_GEN_05_wakeup_when_switching_to_full_display);

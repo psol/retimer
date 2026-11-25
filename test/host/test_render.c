@@ -43,7 +43,7 @@ static void snapshot(const char *name)
     long d = helpers_snapshot(name, image.bytes, RENDER_WIDTH, RENDER_HEIGHT);
     if (d < 0) {
         TEST_FAIL_MESSAGE("Référence absente : lancer avec "
-                          "RETIMER_MAJ_REFERENCES=1");
+                          "RETIMER_UPDATE_REFERENCES=1");
     }
     TEST_ASSERT_EQUAL_MESSAGE(0, d, "L'écran diffère de sa référence");
 }
@@ -95,7 +95,9 @@ static void test_CMD_05_duration_format(void)
 static void test_MAT_04_reduced_format(void)
 {
     check_format(M(12), true, "12:--");
-    check_format(M(11) + 1, true, "12:--");
+    check_format(M(12) + S(59), true, "12:--");
+    check_format(M(11) + S(59) + 1, true, "12:--");
+    check_format(M(11) + S(59), true, "11:--");
     check_format(H(2) + M(30), true, "2:30:--");
 }
 
@@ -115,9 +117,22 @@ static void test_CMD_05_setting_total_and_reminder(void)
     snapshot("02_setting");
 }
 
+/* DEM-02 : libellé « AVANT DÉPART » pendant le délai de démarrage. */
+static void test_DEM_02_starting_indicator(void)
+{
+    ktimer_set_reminder(&m, T0, M(5));
+    ktimer_set_total(&m, T0, M(20));
+    draw(T0 + S(1));
+    TEST_ASSERT_EQUAL(STATE_STARTING, view.state);
+    snapshot("03_starting");
+}
+
 /* DEM-02 : phase éteinte du clignotement : les valeurs disparaissent. */
 static void test_DEM_02_blink_off_phase(void)
 {
+    if (CST_BLINK_PERIOD_MS <= 0) {
+        TEST_IGNORE_MESSAGE("clignotement désactivé dans les constantes");
+    }
     ktimer_set_reminder(&m, T0, M(5));
     ktimer_set_total(&m, T0, M(20));
     draw(T0 + CST_BLINK_PERIOD_MS / 2);
@@ -130,7 +145,7 @@ static void test_DEM_02_blink_off_phase(void)
 /* MAT-04 : décompte long, affichage réduit. */
 static void test_MAT_04_reduced_countdown(void)
 {
-    int64_t start_value = start_countdown(M(45), M(10));
+    int64_t start_value = start_countdown(H(1) + M(15), M(10));
     draw(start_value + M(2) + S(20));
     TEST_ASSERT_TRUE(view.reduced);
     snapshot("04_countdown_reduced");
@@ -164,13 +179,13 @@ static void test_ECH_01_reminder_alert_inverted_zone(void)
 }
 
 /* ECH-07 : plus de rappel avant la fin. */
-static void test_ECH_07_reminder_after_end(void)
+static void test_ECH_07_spent_reminder_shows_off(void)
 {
     int64_t start_value = start_countdown(M(10), M(4));
     ktimer_advance(&m, start_value + M(4));
     ktimer_acknowledge(&m, start_value + M(7));
     draw(start_value + M(7) + S(30));
-    snapshot("08_reminder_after_end");
+    snapshot("08_reminder_spent");
 }
 
 /* ETA-07, ECH-02 : alerte de fin, tout l'écran inversé, « 00:00 ». */
@@ -225,6 +240,13 @@ static void test_PLG_01_24_h_fit_on_screen(void)
     }
 }
 
+/* Écran d'extinction (bouton du rappel maintenu, CLAUDE.md). */
+static void test_power_off_screen(void)
+{
+    render_message(&image, "RETIMER", "ÉTEINT");
+    snapshot("13_power_off");
+}
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -232,15 +254,17 @@ int main(void)
     RUN_TEST(test_MAT_04_reduced_format);
     RUN_TEST(test_ETA_08_MAT_12_idle_screen);
     RUN_TEST(test_CMD_05_setting_total_and_reminder);
+    RUN_TEST(test_DEM_02_starting_indicator);
     RUN_TEST(test_DEM_02_blink_off_phase);
     RUN_TEST(test_MAT_04_reduced_countdown);
     RUN_TEST(test_CMD_05_full_countdown);
     RUN_TEST(test_CMD_05_countdown_over_one_hour);
     RUN_TEST(test_ECH_01_reminder_alert_inverted_zone);
-    RUN_TEST(test_ECH_07_reminder_after_end);
+    RUN_TEST(test_ECH_07_spent_reminder_shows_off);
     RUN_TEST(test_ETA_07_end_alert_inverted_screen);
     RUN_TEST(test_PLG_03_short_countdown_without_reminder);
     RUN_TEST(test_ERR_07_low_battery);
     RUN_TEST(test_PLG_01_24_h_fit_on_screen);
+    RUN_TEST(test_power_off_screen);
     return UNITY_END();
 }

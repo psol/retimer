@@ -55,6 +55,11 @@ typedef struct {
     int64_t limit_ms;
     /* Démarrage : instant de la dernière action (phase du clignotement). */
     int64_t last_action_ms;
+    /*
+     * Décompte : affichage complet jusqu'à cet instant après un réglage
+     * (CST_FULL_DISPLAY_AFTER_ADJUST_MS), pour voir la valeur réglée.
+     */
+    int64_t full_until_ms;
 } ktimer_t;
 
 /* Ce que la minuterie rappel montre à l'écran. */
@@ -100,6 +105,13 @@ uint32_t ktimer_set_total(ktimer_t *m, int64_t now,
                           int64_t new_total_ms);
 
 /* Nouvel intervalle de la minuterie rappel ; 0 la désactive (ACQ-02). */
+/*
+ * MAT-04 : pendant le décompte, repasse en affichage complet pour
+ * CST_FULL_DISPLAY_AFTER_ADJUST_MS, sans rien régler. Sur le CoreInk, le
+ * premier cran donné en affichage réduit ne fait que montrer les secondes.
+ */
+void ktimer_reveal(ktimer_t *m, int64_t now);
+
 uint32_t ktimer_set_reminder(ktimer_t *m, int64_t now,
                              int64_t new_interval_ms);
 

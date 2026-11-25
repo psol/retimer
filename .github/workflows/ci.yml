@@ -48,6 +48,13 @@ jobs:
           idf.py set-target esp32
           idf.py build
           idf.py size
+      - name: Compiler l'application de diagnostic
+        shell: bash
+        working-directory: test/board/diagnostic
+        run: |
+          . $IDF_PATH/export.sh
+          idf.py set-target esp32
+          idf.py build
       - name: Binaire
         uses: actions/upload-artifact@v4
         with:

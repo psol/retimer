@@ -1,0 +1,10 @@
+menu "Retimer : signaux"
+
+config RETIMER_LED_ACTIVE_LOW
+    bool "La LED du CoreInk s'allume quand le GPIO 10 est à 0"
+    default y
+    help
+        M5Unified pilote la LED du GPIO 10 en logique inversée : elle
+        s'allume à l'état bas. À vérifier sur la carte.
+
+endmenu

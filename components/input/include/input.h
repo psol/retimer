@@ -19,7 +19,7 @@ typedef enum {
     BUTTON_UP = 0,   /* molette haut */
     BUTTON_PUSH,     /* appui sur la molette */
     BUTTON_DOWN,     /* molette bas */
-    BUTTON_REMINDER, /* bouton sous la molette */
+    BUTTON_REMINDER, /* bouton sous la molette (bouton marche) */
     BUTTON_COUNT,
 } input_button_t;
 
@@ -30,6 +30,7 @@ typedef enum {
     EV_TOTAL_MINUS,    /* remplace CMD-01 */
     EV_NEXT_REMINDER,  /* remplace CMD-02 */
     EV_ACKNOWLEDGE,    /* CMD-03 */
+    EV_POWER_OFF,      /* bouton du rappel maintenu (CLAUDE.md) */
 } input_type_t;
 
 typedef struct {
@@ -66,6 +67,13 @@ size_t input_process(input_t *s, int64_t now, uint32_t pressed,
  */
 size_t input_wake_press(input_t *s, input_button_t button,
                         input_event_t *out, size_t max);
+
+/*
+ * Ignore un bouton déjà enfoncé jusqu'à son relâchement, sans événement :
+ * à l'allumage, le bouton marche (qui est aussi celui du rappel) est souvent
+ * encore tenu.
+ */
+void input_ignore_until_release(input_t *s, input_button_t button);
 
 /* Vrai tant qu'un bouton est enfoncé ou qu'un changement est en attente. */
 bool input_busy(const input_t *s);

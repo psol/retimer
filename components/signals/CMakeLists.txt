@@ -1,2 +1,4 @@
-# En-têtes seulement : premier jet du pilote à l'étape 3.
-idf_component_register(INCLUDE_DIRS "include" REQUIRES constants)
+idf_component_register(SRCS "signals.c"
+                       INCLUDE_DIRS "include"
+                       REQUIRES constants
+                       PRIV_REQUIRES esp_driver_gpio esp_driver_ledc)

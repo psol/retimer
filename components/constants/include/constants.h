@@ -77,6 +77,12 @@ extern const size_t CST_ACCELERATION_COUNT;
 /* Anti-rebond des boutons. */
 #define CST_DEBOUNCE_MS 20
 
+/*
+ * Interface réduite du CoreInk (CLAUDE.md) : le bouton du rappel est aussi le
+ * bouton marche. Un appui maintenu aussi longtemps éteint l'appareil.
+ */
+#define POWER_OFF_HOLD_MS 3000
+
 /* ---- Intervalles de rappel (CLAUDE.md, interface réduite) --------------- */
 
 /* Liste parcourue par le bouton sous la molette ; 0 = arrêt (ACQ-02). */
@@ -102,11 +108,39 @@ extern const size_t CST_REMINDER_INTERVAL_COUNT;
 /* MAT-04 : affichage réduit (« 12:-- ») pour les longs décomptes. */
 #define CST_REDUCED_DISPLAY true
 
-/* CST-08 : en dessous de ce temps restant, l'affichage redevient complet. */
-#define CST_FULL_DISPLAY_THRESHOLD_MS (1 * MINUTE_MS)
+/*
+ * CST-08 : à ce temps restant et en dessous, l'affichage redevient complet.
+ * Soirée 2 : sous 2 min, on a besoin des secondes.
+ */
+#define CST_FULL_DISPLAY_THRESHOLD_MS (2 * MINUTE_MS)
 
-/* DEM-02 : période du clignotement de démarrage imminent (allumé + éteint). */
-#define CST_BLINK_PERIOD_MS (1 * SECOND_MS)
+/*
+ * MAT-04 : l'affichage réduit ne vaut que pour les longs décomptes : la
+ * globale doit dépasser ce temps restant. Soirée 2 : le gain d'énergie est
+ * modeste sur 20 à 30 min, pour un affichage moins pratique.
+ */
+#define CST_REDUCED_ABOVE_MS (30 * MINUTE_MS)
+
+/*
+ * MAT-04 : après un réglage pendant le décompte, l'affichage reste complet
+ * ce temps-là, pour voir la valeur qu'on règle (soirée 2).
+ */
+#define CST_FULL_DISPLAY_AFTER_ADJUST_MS (5 * SECOND_MS)
+
+/*
+ * MAT-04 : au départ du décompte, l'affichage reste complet ce temps-là
+ * (5:00, 4:59, 4:58…), puis passe en réduit (soirée 2, demande de Benoît).
+ */
+#define CST_FULL_DISPLAY_AT_START_MS (15 * SECOND_MS)
+
+/*
+ * DEM-02 : période du clignotement de démarrage imminent (allumé + éteint).
+ * 0 : pas de clignotement. Sur le CoreInk, l'écran e-ink est trop lent pour
+ * que le clignotement se voie (soirée 2) : des rafraîchissements qui
+ * consomment sans se voir. Le démarrage imminent est signalé par le libellé
+ * fixe « AVANT DÉPART » (CLAUDE.md, « Interface réduite »).
+ */
+#define CST_BLINK_PERIOD_MS 0
 
 /*
  * Rafraîchissement complet de l'écran e-ink contre les traces : au plus tard
@@ -134,8 +168,12 @@ extern const size_t CST_END_RING_NOTE_COUNT;
 #define CST_REMINDER_ALERT_PERIOD_MS 0
 #define CST_END_ALERT_PERIOD_MS 0
 
-/* CST-06 : la LED complète l'écran pendant une alerte (éclat bref). */
-#define CST_ALERT_LED true
+/*
+ * CST-06 : la LED complète l'écran pendant une alerte (éclat bref).
+ * Désactivée sur le CoreInk : la LED est trop petite pour être vue
+ * (vérifications B7 et soirée 2), et chaque éclat réveille l'ESP32.
+ */
+#define CST_ALERT_LED false
 #define CST_ALERT_LED_PERIOD_MS (4 * SECOND_MS)
 #define CST_ALERT_LED_FLASH_MS 30
 

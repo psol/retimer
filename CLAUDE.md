@@ -47,10 +47,14 @@ recommandait plutôt :
   LCD, deux encodeurs rotatifs et deux piles AA (~70 €), la plus sobre en veille ;
 - **packagé** : un M5Stack PaperMono (e-paper tactile, NFC) ou un PaperS3.
 
-Le CoreInk (ESP32-PICO-D4, e-ink 1,54" 200×200, molette trois positions,
-bouton, buzzer, horloge BM8563, batterie LiPo de 390 mAh, boîtier) remplit les
-critères obligatoires, mais avec des limites connues : écran petit, buzzer
-faible, pas de piles du commerce, pas d'encodeurs.
+Le CoreInk (ESP32-PICO-D4, cœur Xtensa LX6, e-ink 1,54" 200×200 GDEW0154M09,
+molette trois positions, bouton, buzzer, horloge BM8563, batterie LiPo de
+390 mAh, boîtier) remplit les critères obligatoires, mais avec des limites
+connues : écran petit, buzzer faible, pas de piles du commerce, pas
+d'encodeurs. L'écran GDEW0154M09 est arrêté (remplacé par le GDEY0154D67, même
+brochage mais autres commandes) et fonctionne de 0 à 50 °C : une cuisine
+convient, pas un four ouvert. Détails, durée de vie et consommation : voir
+[docs/coreink.md](docs/coreink.md).
 
 ### La question ouverte : e-ink ou Sharp Memory LCD
 
@@ -72,16 +76,24 @@ Points à observer pendant les essais :
 2. rendu du clignotement de démarrage imminent ;
 3. intérêt de l'affichage réduit « 12:-- » (MAT-04) ;
 4. réveil par la molette et le bouton depuis la veille (non documenté par
-   M5Stack) ;
+   M5Stack ; vérifié depuis le 24 novembre 2026) et réveil par l'alarme du
+   BM8563 depuis l'extinction complète (à tester) ;
 5. audibilité du buzzer en cuisine ;
-6. autonomie réelle de la batterie.
+6. autonomie réelle de la batterie : courant total sur batterie dans chaque
+   mode (veille profonde, veille légère, extinction). Le pont de mesure de la
+   batterie consomme à lui seul environ 170 µA tant que la carte est allumée
+   (il est coupé avec Q4 à l'extinction), plus que l'ESP32 en veille profonde (calcul d'après le schéma, `docs/coreink.md`,
+   section 6).
 
 ## Interface réduite (CoreInk, option 3)
 
 Le CoreInk n'a pas les deux encodeurs prévus par CMD-01 et CMD-02. Ses
-commandes sont une molette à trois positions (haut, appui, bas), un bouton
-situé physiquement sous la molette et un bouton marche. L'interface retenue pour cette étape est
-« molette pour la globale, intervalles prédéfinis pour le rappel ».
+commandes sont une molette à trois positions (haut, appui, bas), le bouton
+marche situé sous la molette (GPIO 27), un bouton au-dessus de l'écran (GPIO 5,
+inutilisé : il ne réveille pas de la veille profonde) et un bouton de
+réinitialisation (vérifié sur la carte le 23 novembre 2026). L'interface
+retenue pour cette étape est « molette pour la globale, intervalles prédéfinis
+pour le rappel ».
 
 La disposition physique guide l'écran : la molette est au-dessus du bouton, donc
 la minuterie globale s'affiche en haut de l'écran et la minuterie rappel en
@@ -91,12 +103,21 @@ dessous. Chaque commande se trouve ainsi à côté de la valeur qu'elle règle.
 |---|---|---|
 | Molette haut / bas | Augmente / diminue la minuterie globale, à partir de la valeur affichée. | CMD-01 |
 | Molette maintenue en haut ou en bas | Répétition dont le pas grandit avec la durée du maintien. | REG-03 (rotation continue) |
-| Bouton sous la molette | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
+| Bouton sous la molette (bouton marche), appui court | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
 | Appui sur la molette | Acquitte l'échéance en attente. | CMD-03 |
-| Bouton marche | Allumage et extinction de l'appareil. | — |
+| Bouton sous la molette, maintenu 3 s | Extinction de l'appareil ; le même bouton l'allume (circuit d'alimentation). L'appui d'allumage ne compte pas comme un réglage du rappel. | — |
 
 La liste des intervalles de rappel est une table de constantes (GEN-06), par
-exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min.
+exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min. La liste
+s'arrête aux intervalles inférieurs à la minuterie globale affichée : avec
+2:00, seul 1 min est proposé (soirée 2).
+
+Affichage réduit (MAT-04) : seulement quand la globale dépasse 30 min (le gain
+d'énergie est modeste sur un décompte court). « 45:-- » montre les minutes de
+l'affichage complet (45:59 donne « 45:-- »). Il reste complet pendant les
+15 premières secondes du décompte et pendant 5 s après chaque réglage. En
+affichage réduit, le premier cran de molette ou de bouton ne règle rien : il
+montre les secondes ; les crans suivants règlent.
 
 Ce qui reste conforme à SPEC.md :
 
@@ -114,15 +135,19 @@ Ce qui reste conforme à SPEC.md :
   REG-03 pour le rappel) ; pour diminuer, il faut faire le tour de la liste ;
 - l'accélération du réglage dépend de la durée du maintien de la molette, pas
   d'une rotation continue ;
+- pas de clignotement pendant le délai de démarrage (DEM-02) : l'e-ink est
+  trop lent pour qu'il se voie (soirée 2), et chaque rafraîchissement
+  consomme. Le démarrage imminent est signalé par le libellé fixe « AVANT
+  DÉPART » à la place de « TOTAL » (`CST_BLINK_PERIOD_MS` à 0) ;
 - les alertes ne reposent pas sur la seule LED (voir « Alertes à l'écran » ci-dessous) ;
 - pas de capteur « mains sales » dans cette étape (CMD-04 est souhaitable) ; un
   capteur pourra être branché plus tard sur le port Grove.
 
 ### Alertes à l'écran
 
-La fiche technique du CoreInk mentionne une LED, mais son emplacement sur le
-boîtier n'est pas évident : on peut l'utiliser en complément, mais on ne compte
-pas que sur elle pour les alertes (CMD-07, MAT-05). Le signal principal passe
+La fiche technique du CoreInk mentionne une LED, mais elle est trop petite pour
+être vue (vérifié sur la carte) : elle n'est pas utilisée pour les alertes
+(`CST_ALERT_LED` à `false`, CMD-07, MAT-05). Le signal principal passe
 par l'écran, en inversant le noir et le blanc, par exemple :
 
 - **alerte de rappel** : seule la zone du rappel (en bas) est inversée ;
@@ -212,6 +237,15 @@ Points de conception :
 - le prochain réveil est calculé par `kitchen_timer` (échéance, rafraîchissement
   de l'affichage, motif d'alerte) et appliqué par `power` (GEN-05) ;
 - on commence par la veille profonde de l'ESP32 (réveil par minuterie et par
-  broche). L'extinction complète avec réveil par l'horloge BM8563 consomme
-  moins, mais les boutons ne réveilleraient peut-être plus l'appareil : à
-  mesurer avant de l'adopter.
+  broche). L'extinction complète avec réveil par l'horloge BM8563 est faisable
+  matériellement d'après le schéma lu par Benoît le 24 novembre 2026 : VDD du
+  BM8563 sur SYS_BAT (l'horloge compte carte éteinte), INT reliée à PWR_TRIG,
+  qui rallume la carte. Mais seuls le bouton marche et l'alarme rallument
+  (la molette ne passe pas par PWR_TRIG), le drapeau d'alarme doit être
+  effacé avant l'extinction (sinon la carte ne s'éteint pas), l'état de la
+  minuterie doit être gardé ailleurs que dans la mémoire RTC de l'ESP32 (flash,
+  ou date de fin dans l'alarme du BM8563, qui n'a pas de mémoire libre). Le gain d'énergie est important
+  (le pont de batterie, ~170 µA, est coupé avec Q4 ; reste quelques µA) mais
+  le démarrage à froid coûte cher pour des réveils fréquents : à tester et à
+  mesurer avant de l'adopter. La broche CLKOUT de la BM8563 n'est pas connectée. Voir
+  `docs/coreink.md`, section 4, « La BM8563 ».

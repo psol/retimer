@@ -95,7 +95,8 @@ The method is meant to keep the human in control:
 | `components/input`, `eink_display`, `signals`, `power` | CoreInk drivers: buttons, e-ink display, buzzer and LED, sleep and power. |
 | `main/` | Firmware entry point: wires the components together. |
 | `test/host/` | Host unit tests (Unity, CMake), with reference screen images. |
-| `docs/` | Plan, hardware notes. |
+| `test/board/diagnostic/` | On-board diagnostic app, one step per driver. |
+| `docs/` | Plan, hardware notes, on-board checklist, field-trial templates. |
 
 ## Building
 
@@ -131,4 +132,5 @@ GitHub Actions runs the host tests on macOS arm64 and builds the firmware.
 
 ## License
 
-See [LICENSE](LICENSE).
+See [LICENSE](LICENSE). The e-ink driver reuses the panel initialisation
+sequence of M5GFX and LovyanGFX: see [LICENSES/](LICENSES/).

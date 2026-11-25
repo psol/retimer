@@ -36,7 +36,10 @@ int64_t adjust_total(int64_t value_ms, adjust_direction_t direction,
 /*
  * Intervalle de rappel suivant dans CST_REMINDER_INTERVALS_MS : le premier
  * strictement supérieur à interval_ms, ou 0 (« arrêt ») après le dernier.
+ * Si total_ms est positif, la liste s'arrête aux intervalles strictement
+ * inférieurs à total_ms : un rappel qui ne sonnerait qu'après la fin ne sert
+ * à rien (retour de Benoît, soirée 2). total_ms = 0 : pas de limite.
  */
-int64_t adjust_next_reminder(int64_t interval_ms);
+int64_t adjust_next_reminder(int64_t interval_ms, int64_t total_ms);
 
 #endif /* ADJUST_H */

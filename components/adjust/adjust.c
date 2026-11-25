@@ -47,6 +47,12 @@ int64_t adjust_total(int64_t value_ms, adjust_direction_t direction,
     if (value_ms < 0) {
         value_ms = 0;
     }
+    /*
+     * REG-01 : on part de la valeur affichée, arrondie à la seconde au-dessus
+     * comme à l'écran. Sans cela, en cours de décompte, 29,85 s remontait à
+     * 30 s au lieu de passer au cran suivant (soirée 1, C3).
+     */
+    value_ms = (value_ms + SECOND_MS - 1) / SECOND_MS * SECOND_MS;
     int64_t step_size = adjust_total_step(value_ms, direction, repeat);
     int64_t updated;
     if (direction == ADJUST_UP) {
@@ -71,11 +77,15 @@ int64_t adjust_total(int64_t value_ms, adjust_direction_t direction,
     return updated;
 }
 
-int64_t adjust_next_reminder(int64_t interval_ms)
+int64_t adjust_next_reminder(int64_t interval_ms, int64_t total_ms)
 {
     for (size_t i = 0; i < CST_REMINDER_INTERVAL_COUNT; i++) {
-        if (CST_REMINDER_INTERVALS_MS[i] > interval_ms) {
-            return CST_REMINDER_INTERVALS_MS[i];
+        int64_t candidate = CST_REMINDER_INTERVALS_MS[i];
+        if (total_ms > 0 && candidate >= total_ms) {
+            break;
+        }
+        if (candidate > interval_ms) {
+            return candidate;
         }
     }
     return 0; /* après le dernier : arrêt (ACQ-02) */

@@ -64,6 +64,18 @@ static void test_REG_03_acceleration_while_held(void)
     TEST_ASSERT_EQUAL_INT64(M(10), adjust_total_step(H(3), ADJUST_UP, 6));
 }
 
+/*
+ * REG-01, REG-03 : molette maintenue pendant le décompte. Le temps restant
+ * passe sous la valeur réglée entre deux répétitions ; on repart de la valeur
+ * affichée (00:30) et non de 29,85 s, sinon la valeur reste bloquée à 30 s.
+ */
+static void test_REG_03_held_while_counting_down(void)
+{
+    TEST_ASSERT_EQUAL_INT64(M(1), adjust_total(S(29) + 850, ADJUST_UP, 14));
+    TEST_ASSERT_EQUAL_INT64(S(35), adjust_total(S(29) + 850, ADJUST_UP, 0));
+    TEST_ASSERT_EQUAL_INT64(S(25), adjust_total(S(29) + 850, ADJUST_DOWN, 0));
+}
+
 /* PLG-01 : sous 5 s, on va à 5 s en montant et à 0 en descendant. */
 static void test_PLG_01_minimum_5_s_and_zero(void)
 {
@@ -111,18 +123,29 @@ static void test_PLG_02_reminder_walks_the_list(void)
 {
     int64_t v = 0;
     for (size_t i = 1; i < CST_REMINDER_INTERVAL_COUNT; i++) {
-        v = adjust_next_reminder(v);
+        v = adjust_next_reminder(v, 0);
         TEST_ASSERT_EQUAL_INT64(CST_REMINDER_INTERVALS_MS[i], v);
     }
     TEST_ASSERT_EQUAL_INT64(H(2), v);
-    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(v));
+    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(v, 0));
 }
 
 /* Une valeur hors liste passe à la suivante de la liste. */
 static void test_PLG_02_reminder_not_in_list(void)
 {
-    TEST_ASSERT_EQUAL_INT64(M(5), adjust_next_reminder(M(4)));
-    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(H(3)));
+    TEST_ASSERT_EQUAL_INT64(M(5), adjust_next_reminder(M(4), 0));
+    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(H(3), 0));
+}
+
+/* Le rappel ne dépasse pas la globale : avec 2:00, seulement 1 min. */
+static void test_PLG_02_reminder_below_total(void)
+{
+    TEST_ASSERT_EQUAL_INT64(M(1), adjust_next_reminder(0, M(2)));
+    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(M(1), M(2)));
+    TEST_ASSERT_EQUAL_INT64(M(3), adjust_next_reminder(M(2), M(3) + 1));
+    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(M(2), M(3)));
+    /* Globale sous la première valeur : le rappel reste à l'arrêt. */
+    TEST_ASSERT_EQUAL_INT64(0, adjust_next_reminder(0, S(45)));
 }
 
 int main(void)
@@ -138,6 +161,8 @@ int main(void)
     RUN_TEST(test_ERR_06_bounds);
     RUN_TEST(test_PLG_03_short_countdown);
     RUN_TEST(test_REG_01_round_trip);
+    RUN_TEST(test_REG_03_held_while_counting_down);
+    RUN_TEST(test_PLG_02_reminder_below_total);
     RUN_TEST(test_PLG_02_reminder_walks_the_list);
     RUN_TEST(test_PLG_02_reminder_not_in_list);
     return UNITY_END();

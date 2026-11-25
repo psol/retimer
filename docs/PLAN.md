@@ -294,6 +294,130 @@ qu'on teste), puis le reste.
 Après les correctifs, recette technique (section 4.4), version suivante
 (`v2.1`, `v2.2`…), et nouveau tour d'essai si des questions restent ouvertes.
 
+### 6.3 Évolutions et ajustements déjà notés
+
+Notés pendant les vérifications sur la carte (soirée 1, 23 novembre 2026), à
+traiter dans une étape suivante, après les essais :
+
+- **Relancer le dernier programme** (évolution, proposée par Benoît) : un
+  bouton relance toute la minuterie avec la globale et le rappel réglés la
+  dernière fois, pour refaire la recette précédente sans tout régler de
+  nouveau. Sur le CoreInk, le bouton au-dessus de l'écran (GPIO 5) est libre.
+  Il ne réveille pas de la veille profonde : en Veille, il faudrait d'abord
+  réveiller la carte, ou choisir un autre geste (appui long sur la molette,
+  par exemple). À rédiger dans SPEC.md avec `/spec` : quel programme est
+  gardé, s'il survit à l'extinction (ERR-08 dit aujourd'hui que rien n'est
+  conservé après une coupure), et le retour à l'écran.
+- **Accélération de la molette** (ajustement, CST-04) : elle accélère trop vite
+  sur les petites valeurs. Pistes : faire dépendre l'accélération de la valeur
+  (petits pas sous 1 à 2 min), ou allonger les paliers de maintien.
+- **Campagne d'essais du réglage à la molette** (demande de Benoît, soirée 2) :
+  molette maintenue, « ça saute ultra vite ». Préparer un firmware d'essai où
+  les constantes du réglage (CST-03 paliers, CST-04 accélération, délai et
+  période de répétition) se changent sans recompiler, par exemple par des
+  jeux de valeurs choisis au bouton au-dessus de l'écran ou par la console
+  série, avec un journal de chaque essai. Puis une soirée dédiée pour choisir
+  les valeurs.
+- **Consommation** (demande de Benoît, 24 novembre 2026), par ordre de gain
+  estimé, non mesuré :
+  1. veille légère de l'ESP32 pendant que l'écran se met à jour (environ
+     330 ms par mise à jour, aujourd'hui passées éveillé à 160 MHz à
+     attendre la broche BUSY) ;
+  2. éteindre le contrôleur de l'écran après chaque mise à jour pendant le
+     décompte (il n'est éteint qu'avant la veille profonde) ;
+  3. journaux série coupés dans la version d'essai (y compris ceux du
+     démarrage à chaque réveil de veille profonde), gardés dans une version
+     de développement ;
+  4. fréquence du CPU à 80 MHz au lieu de 160 MHz ;
+  5. ~~couper la sortie 32 kHz de l'horloge BM8563 par I2C au démarrage~~ :
+     abandonné le 24 novembre 2026, la broche CLKOUT n'est pas connectée
+     (schéma lu par Benoît) : rien à gagner côté carte.
+  Éléments chiffrés trouvés depuis (calculs d'après le schéma, non mesurés,
+  détail dans `docs/coreink.md`, section 6) : le pont de mesure de la batterie
+  (R41 + R42, 25,1 kΩ) consomme ~170 µA, plus de quinze fois l'ESP32 en veille
+  profonde, mais seulement carte allumée (il est alimenté derrière Q4, lu par
+  Benoît le 24 novembre 2026) ; R32 ajoute ~42 µA tant que le maintien GPIO 12
+  est actif ; le plancher théorique en veille profonde est d'environ 230 µA
+  avant les convertisseurs (de l'ordre de 70 jours sur la batterie de
+  390 mAh), contre quelques µA en extinction complète. La lecture de l'ADC,
+  elle, est négligeable. Le courant de repos des convertisseurs et les fuites
+  du chargeur sont inconnus. Priorité de la mesure d'autonomie : courant total
+  sur batterie en veille profonde et éteint, avant toute optimisation du
+  logiciel.
+  Pour le point 1 : l'attente est dans `wait_ready()` (eink_display.c), une
+  boucle sur BUSY avec `vTaskDelay(2 ms)` ; sans gestion d'énergie
+  (`CONFIG_PM_ENABLE=n`), le cœur s'arrête entre deux tics mais la PLL et les
+  périphériques restent alimentés. Remplacer par un réveil sur BUSY à 1 et
+  `esp_light_sleep_start()`.
+  **Implémentation obligatoire** (décision de Benoît, 24 novembre 2026) :
+  toute mise en veille passe par `power`, qui reste le seul module à appeler
+  les fonctions de veille d'ESP-IDF. `power` offre un service unique
+  `power_wait_until(broche, niveau, délai max)` qui met en veille légère
+  jusqu'au changement de la broche ou au délai. Le pilote d'écran ne connaît
+  pas `power` : il reçoit une fonction d'attente à l'initialisation
+  (`eink_config_t`), qu'il appelle à la place de sa boucle `vTaskDelay`.
+  `main` fait le branchement. Même mécanisme pour les notes du buzzer
+  (`signals`).
+  Puis mesurer l'autonomie sur batterie pour chiffrer le gain. Déjà en place :
+  WiFi et Bluetooth jamais démarrés, veille légère entre deux changements
+  d'affichage avec réveil par les boutons, veille profonde en Veille, écran
+  jamais redessiné à l'identique.
+- **Pistes d'utilisation de l'horloge BM8563** (discussion du 24 novembre 2026,
+  aucune mise en œuvre décidée ; détail et réserves dans `docs/coreink.md`,
+  section 4, « La BM8563 »). Schéma lu par Benoît : VDD sur SYS_BAT (l'horloge
+  compte carte éteinte), CLKOUT non connectée, INT en parallèle sur GPIO 19 et
+  sur PWR_TRIG. Trois options à comparer après mesure :
+  - **A** : veille profonde actuelle (horloge lente 8MD256, broches RTC) ;
+  - **B** : veille légère pendant les décomptes, réveil par INT sur GPIO 19
+    (alarme ou minuterie programmée par I²C dans le BM8563) ;
+  - **C** : extinction complète, l'alarme du BM8563 rallume la carte par
+    PWR_TRIG. Réserves : effacer le drapeau d'alarme avant d'éteindre (sinon la
+    carte ne s'éteint pas) ; seuls le bouton marche et l'alarme rallument (pas
+    la molette) ; état de la minuterie à garder en flash (la BM8563 n'a pas de
+    mémoire libre) ; démarrage à
+    froid plus long (coûteux pour des réveils chaque minute, ~0,7 mA de moyenne
+    estimés) ; en revanche ~230 µA de la veille profonde tombent à quelques µA
+    (pont de batterie coupé avec Q4), donc intéressant pour des réveils rares.
+  Mesures proposées (`docs/verifications-carte.md`, soirée F) : alarme à
+  1 minute, effacement du drapeau, réveil de la veille légère par GPIO 19,
+  courant dans chaque mode, dérive de l'horloge lente sur 30 min à deux
+  températures.
+- **Extinction automatique en Veille** (idée de Benoît, 24 novembre 2026, à
+  étudier, aucun développement maintenant) : une minuterie de cuisine sert une
+  fois par jour, voire une fois tous les deux jours. Après un délai
+  d'inactivité en Veille, on affiche « RETIMER ÉTEINT » avec le bouton qui
+  rallume (l'écran garde le message sans alimentation) et on coupe
+  l'alimentation (GPIO 12 à 0), au lieu de la veille profonde. Estimation
+  non mesurée (`docs/coreink.md`, section 6) : veille profonde ~230 µA, soit
+  ~5,5 mAh par jour ; éteinte, quelques µA, soit ~0,1 mAh par jour ; pour une
+  heure de décompte tous les deux jours, ~65 jours d'autonomie contre
+  plusieurs mois (limite : l'auto-décharge de la batterie, état de la batterie
+  de 2023 inconnu). À étudier : délai d'inactivité ; seul le bouton marche
+  rallume (la molette non) ; rien à conserver en Veille ; démarrage à froid
+  plus long qu'un réveil de veille profonde ; rafraîchir le message toutes les
+  24 h par une alarme du BM8563 (recommandation de la fiche du D67, voir
+  ci-dessous) ; effacer le drapeau d'alarme avant d'éteindre ; vérifier sur
+  batterie que l'extinction tient (essais F1 à F5, `docs/verifications-carte.md`).
+  Décision d'ergonomie à poser à Benoît : ne rien inscrire dans SPEC.md sans son
+  accord (ERR-08 dit aujourd'hui que rien n'est conservé après une coupure).
+- **Rafraîchissement de l'écran** (fiche du GDEY0154D67, valable par hypothèse
+  pour le GDEW0154M09) : rafraîchir au moins toutes les 24 h, et un complet
+  après 5 partiels consécutifs. À comparer à `CST_DISPLAY_PARTIALS_BEFORE_FULL`
+  et à l'écran de veille laissé affiché une nuit. À poser à Benoît (pas à
+  inscrire dans SPEC.md sans son accord). Ajouter aux essais un compteur de
+  rafraîchissements (complets et partiels) en mémoire RTC, affiché au
+  diagnostic, et des photos du contraste avant et après plusieurs heures.
+- **Format de l'image** (remarque de Benoît, 24 novembre 2026) : `render`
+  dessine en « 1 = noir » et le pilote recopie chaque ligne en l'inversant
+  pour le contrôleur. Passer à `render` une option de rendu (polarité des
+  points, négatif) pour que le pilote envoie le tampon tel quel ; le négatif
+  du rafraîchissement complet serait un second rendu. `render` reste
+  indépendant du contrôleur : c'est le pilote qui déclare sa polarité.
+- **Délai de démarrage** (ajustement, CST) : 3 s, jugé court pour régler
+  plusieurs minutes.
+- **Premier appui perdu au réveil** (défaut) : depuis la Veille, il faut
+  appuyer, attendre, puis appuyer de nouveau.
+
 **Critères de sortie** des essais : aucun défaut bloquant ou gênant ouvert, les
 OUV et CST concernés tranchés, les points d'observation du CoreInk renseignés.
 On passe alors au bilan matériel (étape 7).
