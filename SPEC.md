@@ -144,8 +144,9 @@ limites :
 - **DEM-01.** Quand l'utilisateur cesse de tourner les encodeurs et que la
   minuterie globale n'est pas nulle, la minuterie attend un **délai de
   démarrage** (voir CST-01).
-- **DEM-02.** Pendant ce délai, l'affichage clignote pour indiquer que le
-  décompte va démarrer.
+- **DEM-02.** Pendant ce délai, l'affichage signale par un moyen bien visible
+  que le décompte va démarrer (par exemple un clignotement, selon l'écran
+  retenu ; voir MAT-03).
 - **DEM-03.** Toute rotation pendant ce délai le recommence.
 - **DEM-04.** À la fin du délai, le décompte démarre.
 
@@ -229,8 +230,8 @@ Par le capteur « mains sales », s'il est présent :
 |---|---|---|---|
 | ETA-01 | Veille | Aucun décompte en cours, aucune alerte. | Éteint ; réveillé par une rotation d'encodeur. |
 | ETA-02 | Réglage | Aucun décompte en cours ; l'utilisateur tourne les encodeurs. | Éveillé. |
-| ETA-03 | Démarrage imminent | Délai de démarrage en cours, l'affichage clignote. | Éveillé. |
-| ETA-04 | Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, rafraîchissement de l'affichage, alerte) ; réveillé aussi par une action de l'utilisateur (encodeur, bouton, capteur). |
+| ETA-03 | Démarrage imminent | Délai de démarrage en cours, l'affichage signale le démarrage imminent (DEM-02). | Éveillé. |
+| ETA-04 | Décompte | Les minuteries décomptent. L'alerte de rappel peut être active. | Éteint entre deux réveils programmés (échéance, prochain changement de la valeur affichée de l'une des deux minuteries, motif d'alerte) ; réveillé aussi par une action de l'utilisateur (encodeur, bouton, capteur). |
 | ETA-05 | Terminé | La minuterie globale est arrivée à zéro. Seule l'alerte de fin est active (ECH-04). | Réveillé selon le besoin des alertes, et par une action de l'utilisateur (encodeur, bouton, capteur). |
 
 - **ETA-06.** L'alerte de rappel n'est pas un état à part : c'est un indicateur
@@ -287,7 +288,7 @@ Transitions :
 | MAT-01 | Microcontrôleur et langage | Doit pouvoir s'éteindre en ne laissant qu'une minuterie matérielle active, qui le réveille (GEN-05). Python n'est pas le meilleur choix pour cela. |
 | MAT-02 | Chaîne de développement | Compilateur, outil de flashage et débogueur natifs sur Mac Apple Silicon, sans Rosetta (GEN-07). Certains outils de flashage en avaient encore besoin lors des derniers essais : à vérifier pour chaque option. |
 | MAT-03 | Affichage | Type d'écran à choisir ; il doit pouvoir clignoter (démarrage imminent, éventuellement alertes). |
-| MAT-04 | Affichage réduit | Flexibilité ouverte, pas un besoin : si l'analyse montre que cela économise l'énergie sur le matériel retenu, un long décompte peut s'afficher sans les secondes (par exemple « 12:-- ») pour éviter de rafraîchir l'écran chaque seconde. L'affichage complet (« 00:45 ») ne revient que sur les derniers instants. Les deux minuteries étant affichées ensemble, la plus proche de son échéance peut imposer le rythme de rafraîchissement. |
+| MAT-04 | Affichage réduit | Flexibilité ouverte, pas un besoin : si l'analyse montre que cela économise l'énergie sur le matériel retenu, une minuterie dont le terme est lointain peut s'afficher avec moins de précision, par niveaux : précis (« 01:43 »), dizaine (« 05:2- »), minute (« 32:-- »). Un tiret remplace un chiffre, sans arrondi (« 32:-- » : entre 32:00 et 32:59). Chaque minuterie suit sa règle indépendamment de l'autre (par exemple « 01:59 » pour la globale et « 00:5- » pour le rappel), et le matériel se réveille à la prochaine date de changement parmi les deux. Seuils et règles de détail : voir CST-08, et EINK.md pour le matériel retenu. |
 | MAT-05 | Moyen des alertes | LED ou écran, selon le matériel retenu, avec un signal distinct pour l'alerte de rappel et l'alerte de fin. En dernier recours seulement, la sonnerie rejouée à intervalle espacé, puisqu'elle est intrusive. |
 | MAT-06 | Capteur « mains sales » | Type à choisir en regardant les capteurs disponibles : un capteur de gestes semble le plus plausible ; l'audio est risqué mais pas exclu ; d'autres idées sont bienvenues. Il doit fonctionner quelle que soit la lumière, contrairement au capteur de luminosité du prototype, et permettre le retour visuel progressif à l'écran (ACQ-07). Souhaitable, non essentiel. |
 | MAT-07 | Bouton d'acquittement | Modèle, emplacement, facilité d'appui avec les mains sales. |
@@ -310,7 +311,7 @@ Valeurs à placer dans les tables de constantes (GEN-06) :
 | CST-05 | Motif de la sonnerie | plusieurs bips brefs sur 1 à 2 s |
 | CST-06 | Motifs des alertes | un motif pour le rappel, un autre pour la fin ; période à définir |
 | CST-07 | Rafraîchissement de l'affichage en décompte | à définir selon l'écran et la consommation |
-| CST-08 | Seuil de passage à l'affichage complet (si affichage réduit) | par exemple la dernière minute |
+| CST-08 | Seuils de passage entre les niveaux d'affichage (si affichage réduit) | dépend du matériel ; valeurs retenues sur le CoreInk (EINK.md, INK-05) : globale précis jusqu'à 2 min, dizaine jusqu'à 20 min, minute au-delà ; rappel précis jusqu'à 20 s, dizaine jusqu'à 10 min, minute au-delà |
 | CST-09 | Seuil de batterie faible | à définir selon l'alimentation retenue |
 | CST-10 | Délai d'abandon de l'alerte de fin non acquittée | 1 h |
 
