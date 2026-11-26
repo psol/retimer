@@ -127,9 +127,11 @@ Certitude : principe général (général) ; durées (carte).
 - Durée annoncée : 2 s pour un rafraîchissement complet, 0,26 s pour un partiel
   (doc, GDEY0154D67).
 - La documentation recommande d'**éviter les rafraîchissements fréquents
-  prolongés** et d'espacer d'environ 15 s (**valeur non retrouvée** dans les
-  sources lues le 26/11/2026 : le guide d'usage Good Display donne 180 s ;
-  recherche en cours, voir EINK.md, sections 6 et 12). Une minuterie qui affiche les
+  prolongés** et d'espacer (page M5Stack CoreInk, Tutorial > Notes :
+  « The recommended refresh interval is (15s / time) », formule ambiguë que
+  nous lisons « toutes les 15 s »). Le guide d'usage Good Display et la FAQ
+  Waveshare donnent 180 s, pour le rafraîchissement complet (voir EINK.md,
+  section 6). Une minuterie qui affiche les
   secondes rafraîchit chaque seconde : c'est exactement le point 1 des essais
   de CLAUDE.md. Les niveaux dizaine et minute de l'affichage (« 05:2- », « 12:-- », MAT-04, EINK.md) ramènent le rythme à une
   fois par minute pendant l'essentiel du décompte.

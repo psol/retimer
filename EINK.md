@@ -224,7 +224,8 @@ obtenue) par hypothèse : même fabricant, même génération.
 | Recommandation | Source | Notre position |
 |---|---|---|
 | Un complet après 5 partiels consécutifs, contre l'accumulation de rémanence | guide (« Partial Update ») ; fiche, section 7-2 | **Écart assumé** : 300 partiels (INK-20), validé en essai. |
-| Au moins 180 s d'intervalle « après une série de mises à jour » | guide (« Update Intervals ») ; absent de la fiche | **Écart assumé** : en précis on met à jour chaque seconde (INK-19). Contradiction avec l'ancienne valeur de 15 s de `docs/coreink.md` : recherche en cours. |
+| Au moins 180 s d'intervalle « après une série de mises à jour » | guide Good Display (« Update Intervals ») ; absent de la fiche. Même chiffre dans la [FAQ Waveshare 1,54"](https://docs.waveshare.com/1.54inch_e-Paper_E/FAQ), qui le limite au rafraîchissement complet (« sauf les produits qui gèrent le partiel ») | **Écart assumé**, surtout pour le complet : on met à jour chaque seconde en précis (INK-19). |
+| « Intervalle recommandé : (15s / time) » ; « éviter les rafraîchissements fréquents prolongés » | [documentation M5Stack CoreInk](https://docs.m5stack.com/en/core/coreink), Tutorial > Notes. Formule ambiguë (nous la lisons « une mise à jour toutes les 15 s »), sans distinction complet / partiel, sans raison chiffrée | **Écart assumé** (INK-19). C'est l'origine du « 15 s » de `docs/coreink.md`. |
 | Rafraîchir au moins toutes les 24 h | fiche, section 16, point 5 ; le guide la limite aux écrans couleur | À suivre : INK-22. |
 | Veille profonde de l'écran entre deux mises à jour espacées | guide (« Deep Sleep Mode ») | Appliqué en pratique entre les mises à jour. |
 | 0 à 50 °C en fonctionnement | fiche, section 7-1 | Une cuisine convient, pas un four ouvert. |
@@ -349,8 +350,12 @@ Décidés, non implémentés (aucun développement dans ce fil) :
 ## 12. Points ouverts et à observer
 
 1. Autre piste pour signaler le démarrage imminent (INK-32).
-2. Recherche complémentaire sur l'intervalle minimal entre mises à jour : 180 s
-   (guide Good Display) contre 15 s (`docs/coreink.md`).
+2. ~~Recherche sur l'intervalle minimal entre mises à jour : 180 s contre 15 s.~~
+   Faite le 26 novembre 2026, voir la table de la section 6 : les deux chiffres
+   viennent de sources différentes (15 s : M5Stack, formule ambiguë ; 180 s :
+   Good Display et Waveshare, pour le complet). Le manuel Waveshare 1,54" n'a pas
+   pu être lu. Les deux sont dépassés par notre rythme en précis, sans
+   rémanence constatée.
 3. Mécanisme du complet de 24 h (INK-22).
 4. Mise à jour partielle limitée à une zone ou à toute l'image (INK-18).
 5. À observer en essai : traces après des heures de mises à jour fréquentes
