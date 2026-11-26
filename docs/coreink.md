@@ -127,9 +127,11 @@ Certitude : principe général (général) ; durées (carte).
 - Durée annoncée : 2 s pour un rafraîchissement complet, 0,26 s pour un partiel
   (doc, GDEY0154D67).
 - La documentation recommande d'**éviter les rafraîchissements fréquents
-  prolongés** et d'espacer d'environ 15 s. Une minuterie qui affiche les
+  prolongés** et d'espacer d'environ 15 s (**valeur non retrouvée** dans les
+  sources lues le 26/11/2026 : le guide d'usage Good Display donne 180 s ;
+  recherche en cours, voir EINK.md, sections 6 et 12). Une minuterie qui affiche les
   secondes rafraîchit chaque seconde : c'est exactement le point 1 des essais
-  de CLAUDE.md. L'affichage réduit « 12:-- » (MAT-04) ramène le rythme à une
+  de CLAUDE.md. Les niveaux dizaine et minute de l'affichage (« 05:2- », « 12:-- », MAT-04, EINK.md) ramènent le rythme à une
   fois par minute pendant l'essentiel du décompte.
 - Un rafraîchissement complet périodique efface les traces : sa période est une
   constante (`CST_ECRAN_RAFRAICHISSEMENT_COMPLET`), à régler en essai.

@@ -30,7 +30,7 @@ attendu de la minuterie, indépendamment du matériel.
 - **On ne modifie pas SPEC.md sans l'accord de Benoît.** La commande
   `/spec` (`.claude/commands/spec.md`) sert à le faire évoluer.
 - Les écarts imposés par le matériel du moment sont décrits ici, dans
-  CLAUDE.md, et non dans SPEC.md (voir « Interface réduite »).
+  CLAUDE.md, et non dans SPEC.md (voir [EINK.md](EINK.md)).
 
 ## Choix du matériel (provisoire) : M5Stack CoreInk
 
@@ -74,7 +74,7 @@ Points à observer pendant les essais :
 
 1. lisibilité et traces après des heures de rafraîchissement partiel ;
 2. rendu du clignotement de démarrage imminent ;
-3. intérêt de l'affichage réduit « 12:-- » (MAT-04) ;
+3. intérêt des niveaux d'affichage dizaine et minute (MAT-04, EINK.md) ;
 4. réveil par la molette et le bouton depuis la veille (non documenté par
    M5Stack ; vérifié depuis le 24 novembre 2026) et réveil par l'alarme du
    BM8563 depuis l'extinction complète (à tester) ;
@@ -85,83 +85,20 @@ Points à observer pendant les essais :
    (il est coupé avec Q4 à l'extinction), plus que l'ESP32 en veille profonde (calcul d'après le schéma, `docs/coreink.md`,
    section 6).
 
-## Interface réduite (CoreInk, option 3)
+## Interface réduite et affichage e-ink
 
-Le CoreInk n'a pas les deux encodeurs prévus par CMD-01 et CMD-02. Ses
-commandes sont une molette à trois positions (haut, appui, bas), le bouton
-marche situé sous la molette (GPIO 27), un bouton au-dessus de l'écran (GPIO 5,
-inutilisé : il ne réveille pas de la veille profonde) et un bouton de
-réinitialisation (vérifié sur la carte le 23 novembre 2026). L'interface
-retenue pour cette étape est « molette pour la globale, intervalles prédéfinis
-pour le rappel ».
+L'interface réduite du CoreInk (molette pour la globale, intervalles prédéfinis
+pour le rappel, au lieu des deux encodeurs de CMD-01 et CMD-02), la logique
+d'affichage de l'écran e-ink (niveaux précis, dizaine et minute, rémanence du
+réglage, rafraîchissements, démarrage imminent, alertes à l'écran) et les
+écarts assumés sont décrits dans [EINK.md](EINK.md), avec des besoins numérotés
+`INK-xx`. Même règle que pour SPEC.md : on cite ces identifiants dans les
+commits, les tests et le code, et on ne les renumérote pas.
 
-La disposition physique guide l'écran : la molette est au-dessus du bouton, donc
-la minuterie globale s'affiche en haut de l'écran et la minuterie rappel en
-dessous. Chaque commande se trouve ainsi à côté de la valeur qu'elle règle.
-
-| Commande CoreInk | Fonction | Remplace |
-|---|---|---|
-| Molette haut / bas | Augmente / diminue la minuterie globale, à partir de la valeur affichée. | CMD-01 |
-| Molette maintenue en haut ou en bas | Répétition dont le pas grandit avec la durée du maintien. | REG-03 (rotation continue) |
-| Bouton sous la molette (bouton marche), appui court | Chaque appui passe à l'intervalle de rappel suivant dans une liste prédéfinie, puis revient à « arrêt » après le dernier. | CMD-02 |
-| Appui sur la molette | Acquitte l'échéance en attente. | CMD-03 |
-| Bouton sous la molette, maintenu 3 s | Extinction de l'appareil ; le même bouton l'allume (circuit d'alimentation). L'appui d'allumage ne compte pas comme un réglage du rappel. | — |
-
-La liste des intervalles de rappel est une table de constantes (GEN-06), par
-exemple : arrêt, 1, 2, 3, 5, 10, 15, 20, 30, 45, 60, 90, 120 min. La liste
-s'arrête aux intervalles inférieurs à la minuterie globale affichée : avec
-2:00, seul 1 min est proposé (soirée 2).
-
-Affichage réduit (MAT-04) : seulement quand la globale dépasse 30 min (le gain
-d'énergie est modeste sur un décompte court). « 45:-- » montre les minutes de
-l'affichage complet (45:59 donne « 45:-- »). Il reste complet pendant les
-15 premières secondes du décompte et pendant 5 s après chaque réglage. En
-affichage réduit, le premier cran de molette ou de bouton ne règle rien : il
-montre les secondes ; les crans suivants règlent.
-
-Ce qui reste conforme à SPEC.md :
-
-- pas de modes (GEN-03) : chaque commande garde toujours la même fonction ;
-- démarrage automatique après le délai de démarrage, relancé par toute action
-  de réglage (DEM-01 à DEM-04) ;
-- ramener la globale à zéro arrête le décompte et acquitte tout (ACQ-01) ;
-  choisir « arrêt » dans la liste du rappel vaut ACQ-02 ;
-- modification pendant le décompte (MOD-01 à MOD-03), les règles d'échéance
-  (ECH), les états (ETA) et les erreurs (ERR) sont inchangés.
-
-Écarts assumés :
-
-- le rappel se règle par valeurs discrètes et non en continu (PLG-02, REG-01 à
-  REG-03 pour le rappel) ; pour diminuer, il faut faire le tour de la liste ;
-- l'accélération du réglage dépend de la durée du maintien de la molette, pas
-  d'une rotation continue ;
-- pas de clignotement pendant le délai de démarrage (DEM-02) : l'e-ink est
-  trop lent pour qu'il se voie (soirée 2), et chaque rafraîchissement
-  consomme. Le démarrage imminent est signalé par le libellé fixe « AVANT
-  DÉPART » à la place de « TOTAL » (`CST_BLINK_PERIOD_MS` à 0) ;
-- les alertes ne reposent pas sur la seule LED (voir « Alertes à l'écran » ci-dessous) ;
-- pas de capteur « mains sales » dans cette étape (CMD-04 est souhaitable) ; un
-  capteur pourra être branché plus tard sur le port Grove.
-
-### Alertes à l'écran
-
-La fiche technique du CoreInk mentionne une LED, mais elle est trop petite pour
-être vue (vérifié sur la carte) : elle n'est pas utilisée pour les alertes
-(`CST_ALERT_LED` à `false`, CMD-07, MAT-05). Le signal principal passe
-par l'écran, en inversant le noir et le blanc, par exemple :
-
-- **alerte de rappel** : seule la zone du rappel (en bas) est inversée ;
-- **alerte de fin** : tout l'écran est inversé.
-
-Avantage de l'e-ink : l'image inversée reste affichée sans consommer, ce qui
-convient à une alerte persistante et non intrusive (GEN-04). Le motif exact
-(fixe ou clignotant lent) et l'usage de la LED en complément sont à régler en
-essai (CST-06). À vérifier en essai :
-que l'inversion reste visible de loin et ne laisse pas de traces.
-
-Cette interface permet de commencer les essais d'utilisation tout de suite, en
-une main, avec des doigts sales : en cuisine, le rappel se règle presque
-toujours sur quelques valeurs rondes.
+Commandes, en résumé : molette haut / bas pour la globale, bouton sous la
+molette (appui court) pour le rappel suivant, appui sur la molette pour
+acquitter, bouton maintenu 3 s pour éteindre. La minuterie globale s'affiche
+en haut, le rappel en dessous.
 
 ## Chaîne de développement
 
